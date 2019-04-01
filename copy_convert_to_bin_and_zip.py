@@ -420,9 +420,5 @@ if __name__ == "__main__":
     print("#" * 120)
     pass
 
-
-    print("hello wprd!!~")
-    print("fghjkiuyfdfghjk")
-
-
-    raise RecursionError
+    print("hello word~~")
+    print("hhewoiawghrghuire")
