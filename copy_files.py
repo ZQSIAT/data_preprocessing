@@ -38,5 +38,5 @@ if __name__ == '__main__':
     EndTime = time.time()
     print("-" * 120)
     print("Finished! Time elapse: {:.2f} minutes.".format((EndTime - StartTime) / 60.0))
-
+    raise RuntimeError
     pass
