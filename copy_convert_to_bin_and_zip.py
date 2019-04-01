@@ -421,8 +421,4 @@ if __name__ == "__main__":
     pass
 
     print("hello word~~")
-
-# TEST
-
-
-
+    print("hhewoiawghrghuire")
