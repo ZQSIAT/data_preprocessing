@@ -18,5 +18,6 @@ if __name__ == "__main__":
     my_start = Main()
     file_dir1 = "E:\\标签程序\\temp"
     my_start.checkCount(file_dir1)
+#     test
 
 
