@@ -106,11 +106,11 @@ class renameKinect(object):
     def findP(self,name):
         index = self.Names.index(name)
         if (index < 9):
-            self.p = "P00" + str(index + 1);
+            self.p = "P00" + str(index + 1)
         elif (index >= 9 and index < 99):
-            self.p = "P0" + str(index + 1);
+            self.p = "P0" + str(index + 1)
         else:
-            self.p = "P" + str(index + 1);
+            self.p = "P" + str(index + 1)
         #print("我的P是：", self.p)
 
 
