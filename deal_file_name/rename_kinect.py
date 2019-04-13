@@ -176,6 +176,8 @@ class renameKinect(object):
                     else:
                         os.rename(path4, newPath)  # 剪切文件
                         print("remove %s -> %s" % (path3, newPath))
+                        raise RuntimeError
+
 
 
 
@@ -186,15 +188,16 @@ if __name__ == "__main__":
     # n是kinect编号，m是改变后的文件后缀名,v是改变后的文件夹名字
     # 其中  RGB对应.avi  bone,depth,infrared对应.7z  2D,3D对应.txt
     global n,m,v,finalFilename
-    n = "1"
+    n = "3"
     #m = ".avi" # ".txt" ".7z" ".avi"
     #v = "RGB_KINECT" # "2D_BONE_KINECT" "3D_BONE_KINECT" "BONE_PICTURE_KINECT" "DEPTH_KINECT" "INFRARED_KINECT" "RGB_KINECT"
     #finalFilename = "compressed_bgr.avi"  # "compressed_bgr.avi" "kinect bone.txt" "kinect color.txt" "bone" "depth" "infrared"
     #path1 = "E:\\重命名前\\92-276_COPYED_KINECT0" + n  1-91_KINECT0" + n DataSet1//KINECT//
-    path1 = "//172.20.15.56//cas_mhad//Preprocessing_Test//1-91_KINECT0" + n
+
+    path1 = "//172.20.15.56//cas_mhad//DATASET_BACKUP//92-276_KINECT0" + n
     #path1 = "E:\\重命名前\\92-276_KINECT0" + n
     #path10 = "E:\\重命名\\DataSet1\\KINECT\\" + v
-    path10 ="//172.20.15.56//cas_mhad//Preprocessing_Test//DataSet1//KINECT//"
+    path10 ="//172.20.15.56//cas_mhad//Preprocessing_Test//DataSet2//KINECT//"
 
     myStart.mycopyfile(path1,path10)
     t2 = time.time() * 1000
