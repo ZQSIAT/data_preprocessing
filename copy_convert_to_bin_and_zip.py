@@ -296,10 +296,10 @@ def TestBinToImage(a = ""):
         # plt.show()
         # plt.close()
         image = Image.fromarray(temp_arr) #.convert('L')
-        if not os.path.exists("F:/{:s}_depth".format(a.split('/')[-2],i)):
+        if not os.path.exists("F:/{:s}_depth".format(a.split('/')[-2], i)):
             os.mkdir("F:/{:s}_depth".format(a.split('/')[-2],i))
             pass
-        image.save("F:/{:s}_depth/{:04d}_bin.png".format(a.split('/')[-2],i), 'png')
+        image.save("F:/{:s}_depth/{:04d}_bin.png".format(a.split('/')[-2], i), 'png')
             # raise RuntimeError
         print("{:04d} has done~~~!!~~~~".format(i))
 
@@ -309,7 +309,7 @@ def TestBinToImage(a = ""):
 
 # 将单个Bin文件转为png图像
 def BinToImage(a = ""):
-    with open(a,mode='rb') as f:
+    with open(a, mode='rb') as f:
         arr = pickle.load(f) #加载并反序列化数据
     arr = arr.reshape(424, 512)
     arr = np.int32(arr)
@@ -370,7 +370,9 @@ def copy_cut_paste(a):
 
 if __name__ == "__main__":
 
-    TestBinToImage("C:/Users/zqs20/Desktop/O001P011C016T001S001/depth.bin")
+    bin_to_image_root = "C:/Users/zqs20/Desktop/样例/KINECT/INFRARED/"
+    TestBinToImage(bin_to_image_root + "infrared (4).bin")
+
     raise RuntimeError
 
     # DataSourceDir = "E:/KINECT03/"

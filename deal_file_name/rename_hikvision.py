@@ -6,15 +6,14 @@ import pandas as pd
 import logging
 
 logging.basicConfig(level=logging.DEBUG,
-                        filename='{:s}_some_error_file.log'.format(time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())),
-                        datefmt='%Y/%m/%d %H:%M:%S',
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(lineno)d - %(module)s - %(message)s')
+                    filename='{:s}_some_error_file.log'.format(time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())),
+                    datefmt='%Y/%m/%d %H:%M:%S',
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(lineno)d - %(module)s - %(message)s')
 logger = logging.getLogger(__name__)
 # logger.info('This is a log info')
 # logger.debug('Debugging')
 # logger.warning('Warning exists')
 # logger.info('Finish')
-
 class RenameHikvision(object):
     def __init__(self):
 
@@ -101,17 +100,13 @@ class RenameHikvision(object):
                  'zhaohaoda', 'pangwenjun', 'xujinshuang', 'huyueyan', 'linjiaxin', 'chenzejia', 'linjiaming',
                  'chenmingting', 'xujiayang', 'xujiaohao', 'hannana', 'xuxiao', 'renjiao']
         self.new_name = "O{:03d}P{:03d}C{:03d}T{:03d}S{:03d}.mp4"
-        # self.dst_path = "//172.20.12.174/cas_mhad/Preprocessing_Test/DataSet1/RGB_HIKVISION/"
-
-        self.dst_path = "//172.20.12.174/cas_mhad/DATASET_BACKUP/HIKVISION/temp_dst/"
-        self.root_path = "//172.20.12.174/cas_mhad/DATASET_BACKUP/HIKVISION/temp/"
-
+        self.dst_path = "//172.20.12.174/cas_mhad/Preprocessing_Test/DataSet2/RGB_HIKVISION/"
+        # self.dst_path = "//172.20.12.174/cas_mhad/DATASET_BACKUP/HIKVISION/temp_dst/"
+        # self.root_path = "//172.20.12.174/cas_mhad/DATASET_BACKUP/HIKVISION/temp/"
         # self.root_path = "//172.20.12.174/cas_mhad/DATASET_BACKUP/HIKVISION/1-91_HIKVISION/"
-        self.normal_samples_len = 24
-
-        # self.root_path = "//172.20.12.174/cas_mhad/DATASET_BACKUP/HIKVISION/92-276_HIKVISION/"
-        # self.normal_samples_len = 21
-
+        # self.normal_samples_len = 24
+        self.root_path = "//172.20.12.174/cas_mhad/DATASET_BACKUP/HIKVISION/92-276_HIKVISION/"
+        self.normal_samples_len = 21
         pass
 
     def filter_sequence(self, key_words, src_list):
@@ -147,6 +142,7 @@ class RenameHikvision(object):
             logger.info("{:s} no files be here!!!".format(now_subject_path))
             pass
         if not len(now_sequence_list) == self.normal_samples_len:
+            print("{:s} don't have {:d} samples!!!".format(now_subject_path, self.normal_samples_len))
             logger.info("{:s} don't have {:d} samples!!!".format(now_subject_path, self.normal_samples_len))
             pass
 
@@ -160,16 +156,22 @@ class RenameHikvision(object):
                 time = self.filter_sequence(ICount[0:3], now_sequence_list).index(ICount) + 1
                 pass
             if time > 3:
+                print("{:s} repeat more than 3 times.".format(now_subject_path + ICount[0:3]))
                 logger.info("{:s} repeat more than 3 times.".format(now_subject_path + ICount[0:3]))
                 pass
             if not len(os.listdir(now_subject_path + ICount)) == 15:
+                print("{:s} have not enough 15 cameras.".format(now_subject_path + ICount))
                 logger.info("{:s} have not enough 15 cameras.".format(now_subject_path + ICount))
                 pass
             for j, JCount in enumerate(os.listdir(now_subject_path + ICount)):
                 camera = int(JCount.split('_')[0].split('.')[-1])
                 src_file = now_subject_path + ICount + '/' + JCount
                 dst_file = dst_root + self.new_name.format(option, people, camera, time, sequence)
-                if os.path.exists(src_file) and not os.path.exists(dst_file):
+                if not JCount[-4:] == '.mp4':
+                    print("{:s} there are some error files!!!".format(now_subject_path + ICount))
+                    logger.info("{:s} there are some error files!!!".format(now_subject_path + ICount))
+                    pass
+                if JCount[-4:] == '.mp4' and os.path.exists(src_file) and not os.path.exists(dst_file):
                     os.rename(src_file, dst_file)
                     # print("{:s} have done.".format(src_file))
                     logger.info("{:s} have done.".format(src_file))
@@ -181,7 +183,6 @@ class RenameHikvision(object):
             pass
         # raise RuntimeError
         pass
-
 
     def generate_list(self):
         original_path = self.root_path
@@ -203,7 +204,6 @@ class RenameHikvision(object):
         my_csv.to_csv(temp_path + time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()) + '.csv', encoding = 'gbk')
         pass
     pass
-
 
 
 if __name__ == "__main__":

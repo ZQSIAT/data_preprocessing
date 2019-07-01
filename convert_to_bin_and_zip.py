@@ -30,7 +30,7 @@ def Depth_ImageToBin(ICount,b = "depth"):
             # raise RuntimeError
             pass
 
-        img_array = np.concatenate([np.expand_dims(x, 0) for x in img_array_list], axis=0).reshape(N,217088)
+        img_array = np.concatenate([np.expand_dims(x, 0) for x in img_array_list], axis=0).reshape(N, 217088)
 
         File_Path = ICount + "/" + b + ".bin"
         File_Path_7z = ICount + "/" + b + ".7z"

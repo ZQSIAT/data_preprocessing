@@ -217,6 +217,10 @@ def GetPictureList(a = "F:/DATASET/"):
     pass
 
 if __name__ == "__main__":
+    start = "16-50-03-137"
+    end = "16-51-07-635"
+    print(TimeSubtraction(end, start))
+    raise RuntimeError
 
     DataSourceDir = "D:/0000DATA/DATASET_TEST/HIKVISION/"
     LabelDataDir = "D:/0000DATA/DATASET_TEST/LABEL/"
