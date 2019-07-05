@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Encoding" addBOMForNewFiles="with NO BOM">
+    <file url="file://$PROJECT_DIR$/log/original_action_judge.json" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/log/original_action_judge.txt" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/log/original_action_judge.txt" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/log/test.json" charset="GBK" />
     <file url="file://$PROJECT_DIR$/test.txt" charset="GBK" />
   </component>
 </project>

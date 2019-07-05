@@ -9,6 +9,7 @@ from multiprocessing import Pool
 import shutil as st
 import pandas as pd
 import logging
+import json
 
 logging.basicConfig(level=logging.DEBUG,
                     filename='./log/{:s}_address_label.log'.format(time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())),
@@ -22,9 +23,9 @@ class AddressLabel(object):
     The class is for generating the final label with including some function for dealing label array.
     """
     def __init__(self):
-        self.final_path = "D:/pycharm_project/temp/92_276_a03/final_label/"
-        self.root_path = "D:/pycharm_project/temp/92_276_a03/original_label/"
-        self.judge_path = "D:/pycharm_project/temp/92_276_a03/judge_label/"
+        self.final_path = "D:/pycharm_project/temp/1_91_a01/final_label/"
+        self.root_path = "D:/pycharm_project/temp/1_91_a01/original_label/"
+        self.judge_path = "D:/pycharm_project/temp/1_91_a01/judge_label/"
         self.action_chinese_name = ['戴眼镜', '脱帽', '敬礼', '梳头', '向前扔东西', '自拍', '读书', '签字', '打字', '打电话',
                                     '捡东西', '看手表', '咳嗽', '喝水', '吃东西', '抽烟', '擦汗', '修眉', '玩手机', '散步',
                                     '转身', '快速走', '慢跑', '快速跑', '跳绳', '原地跳两下', '趴下', '跌倒', '后仰躺下',
@@ -35,6 +36,7 @@ class AddressLabel(object):
                                     '干杯', '拥抱', '摔跤', '格斗', '蛙跳', '用剑决斗', '丢垃圾', '打喷嚏', '打哈欠']
         self.temp_path = "D:/pycharm_project/temp/"
         self.temp_file = "test_label.txt"
+        self.action_error = {"Total": 0}
         pass
 
     @staticmethod
@@ -75,9 +77,9 @@ class AddressLabel(object):
         return path_list, file_list
         pass
 
-    def merge2labels_92_276_a03(self):
+    def merge2labels(self, statistical_info=None):
         """
-        Merge the original label and judgment label for the second phase.
+        Merge the original label and judgment label.
         """
         label_list = self.generate_list()
         for i, IContent in enumerate(label_list[1]):
@@ -88,24 +90,24 @@ class AddressLabel(object):
             original_label = self.read_txt(self.root_path + IContent)
             judge_label = self.read_txt(self.judge_path + IContent)
             if len(original_label) == len(judge_label):
-                # --contrast action judge--
-                original_action = np.array(original_label)[:, 3]
-                judge_action = np.array(judge_label)[:, 3]
-                if np.where(original_action != judge_action)[0].size > 0:  # If there are inconsistencies.
-                    for ii in np.where(original_action != judge_action)[0]:
-                        print("{:s}, {:d}".format(IContent, ii + 1))
-                        logger.info("{:s}, {:d}".format(IContent, ii + 1))
-                        pass
+                if statistical_info is 1:
+                    # --contrast action judge--
+                    self.contrast_action_judge(original_label, judge_label, IContent)
                     pass
-                else:  # If there are no inconsistencies.
+                if statistical_info is 2:
+                    # --Count the number of action errors--
+                    self.count_action_judge_error(judge_label, 4, IContent)
+                    pass
+                if statistical_info is None:  # There are no inconsistencies.
                     final_label = np.array(judge_label)
                     final_label[:, [3, 4]] = final_label[:, [4, 3]]  # Swap columns 4 and 5 of the action judgment label
                     coded_list_label = self.generate_action_order(final_label, IContent)
                     # Specify the time window judgement
-                    replaced_list_label = self.replace_time_windows_judgment(None, ['31', '26', '28', '25'], '1', coded_list_label)
+                    # replaced_list_label = self.replace_time_windows_judgment(None, ['31', '26', '28', '25'], '1', coded_list_label)
                     # Save the final labels
+                    final_list_label = coded_list_label
                     save_name = self.final_path + IContent
-                    np.savetxt(save_name, np.array(replaced_list_label), delimiter=',', fmt='%s')
+                    np.savetxt(save_name, np.array(final_list_label), delimiter=',', fmt='%s')
                     print("\"{:s}\" has done.".format(IContent))
                     pass
                 pass
@@ -115,8 +117,8 @@ class AddressLabel(object):
                 logger.info("\"{:s}\" The length of original label is different from judge label !!!".format(IContent))
                 continue
                 pass
-            break
-            raise RuntimeError
+            # break
+            # raise RuntimeError
             pass
         pass
 
@@ -170,6 +172,68 @@ class AddressLabel(object):
             pass
         return list_final_label
         pass
+
+    @staticmethod
+    def compare_original_judge(original_path, judge_path):
+        """
+        Compare the number of original and judgment tag files, and print them.
+        :param original_path: The file path of original label.
+        :param judge_path: The file path of judge label.
+        :return: No return.
+        """
+        original_list = os.listdir(original_path)
+        judge_list = os.listdir(judge_path)
+        print("There are some files not in judge list.\n", [i for i in original_list if i not in judge_list])
+        print("There are some files not in original list.\n", [i for i in judge_list if i not in original_list])
+        pass
+
+    @staticmethod
+    def contrast_action_judge(original_label, judge_label, file_name):
+        """
+        Contrast action judge, You need to deal with it, If there are inconsistencies.
+        :param original_label: Reading list from original file.
+        :param judge_label: Reading list from judge file.
+        :param file_name: Label file name.
+        :return: No return.
+        """
+        original_action = np.array(original_label)[:, 3]
+        judge_action = np.array(judge_label)[:, 3]
+        if np.where(original_action != judge_action)[0].size > 0:
+            for ii in np.where(original_action != judge_action)[0]:
+                print("{:s}, {:d}".format(file_name, ii + 1))
+                logger.info("{:s}, {:d}".format(file_name, ii + 1))
+                pass
+            pass
+        pass
+
+    def count_action_judge_error(self, label, judge_type=3, file_name=None):
+        """
+        Count the number of action errors
+        :param label: Reading list from label file.
+        :param judge_type: Counting the action judge value = 3 or time windows judge value = 4?
+        :param file_name: Label file name.
+        :return: No return.
+        """
+        judge = np.array(label)[:, judge_type]
+        if np.where(judge == '2')[0].size > 0:
+            for ii in np.where(judge == '2')[0]:
+                self.action_error["Total"] = self.action_error["Total"] + 1
+                if not label[ii][0] in self.action_error.keys():
+                    self.action_error.update({label[ii][0]: 1})
+                    pass
+                else:
+                    self.action_error[label[ii][0]] = self.action_error[label[ii][0]] + 1
+                    pass
+                print("{:s}, {:d}".format(file_name, ii + 1))
+                logger.info("{:s}, {:d}".format(file_name, ii + 1))
+                pass
+            pass
+
+    @staticmethod
+    def store_json(store_path, data):
+        with open(store_path, 'w') as json_file:
+            json_file.write(json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '), ensure_ascii=False))
+
     pass
 
 
@@ -178,7 +242,12 @@ if __name__ == "__main__":
     start_time = time.time()
     print("#" * 120)
     my_task = AddressLabel()
-    my_task.merge2labels_92_276_a03()
+    my_task.merge2labels(2)
+    print(my_task.action_error)
+    temp_path = "./log/judge_time_windows_error.json"
+    my_task.store_json(temp_path, my_task.action_error)
+    # my_task.compare_original_judge(my_task.root_path, my_task.judge_path)
+    # my_task.merge2labels_92_276_a03()
     # my_task.merge2labels()
     # label_content = my_task.read_txt(my_task.temp_path + my_task.temp_file)
     # original_label = my_task.read_txt(my_task.temp_path + "P001T001S003_o.txt")
@@ -216,7 +285,6 @@ if __name__ == "__main__":
     # print(label_list[1])
     # processing by pool map
     # p = Pool(8)
-
     end_time = time.time()
     print("#" * 120)
     print("Finished! Time elapse: {:.2f} minutes.".format((end_time - start_time) / 60.0))
