@@ -141,7 +141,7 @@ def Infrared_ImageToBin(ICount,b = "infrared"):
             # raise RuntimeError
             pass
 
-        img_array = np.concatenate([np.expand_dims(x, 0) for x in img_array_list], axis=0).reshape(N,217088)
+        img_array = np.concatenate([np.expand_dims(x, 0) for x in img_array_list], axis=0).reshape(N, 217088)
 
         with open(File_Path, mode='wb') as f:
             pickle.dump(img_array, f)
