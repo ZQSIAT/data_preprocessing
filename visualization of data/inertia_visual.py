@@ -9,23 +9,25 @@ import time
 from PIL import Image, ImageOps
 import numpy as np
 import numbers
-# import cv2
 import math
 import os
 import matplotlib.pyplot as plt
 import logging
 
-# logging.basicConfig(level=logging.DEBUG,
-#                     filename='{:s}_inertial_visual.log'.format(time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())),
-#                     datefmt='%Y/%m/%d %H:%M:%S',
-#                     format='%(asctime)s - %(name)s - %(levelname)s - %(lineno)d - %(module)s - %(message)s')
-# logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG,
+                    filename='./log/{:s}_inertial_visual.log'.format(time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())),
+                    datefmt='%Y/%m/%d %H:%M:%S',
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(lineno)d - %(module)s - %(message)s')
+logger = logging.getLogger(__name__)
+
 
 class InertiaVisual(object):
     def __init__(self):
 
         pass
-    def read_txt(self, path):
+
+    @staticmethod
+    def read_txt(path):
         file_content = []
         with open(path) as lf:
             for i, line in enumerate(lf.readlines()):
@@ -43,7 +45,8 @@ class InertiaVisual(object):
         return file_content
         pass
 
-    def genarate_IMU_date(self, data_type):
+    @staticmethod
+    def generate_inertial_date(self, data_type):
         """
         This is the script to generate the acceleration, gyro, quaternion, velocity and position data in the form of F x (17*N)
         :param data_type:string, select a type of data which you need to generate.
@@ -56,6 +59,7 @@ class InertiaVisual(object):
         pass
 
     pass
+
 
 if __name__ == "__main__":
     print("Start processing...")

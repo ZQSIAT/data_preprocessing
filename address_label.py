@@ -11,7 +11,7 @@ import pandas as pd
 import logging
 
 logging.basicConfig(level=logging.DEBUG,
-                    filename='{:s}_address_label.log'.format(time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())),
+                    filename='./log/{:s}_address_label.log'.format(time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())),
                     datefmt='%Y/%m/%d %H:%M:%S',
                     format='%(asctime)s - %(name)s - %(levelname)s - %(lineno)d - %(module)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -81,6 +81,10 @@ class AddressLabel(object):
         """
         label_list = self.generate_list()
         for i, IContent in enumerate(label_list[1]):
+            if os.path.exists(self.final_path + IContent):
+                print("\"{:s}\" has done.".format(IContent))
+                continue
+                pass
             original_label = self.read_txt(self.root_path + IContent)
             judge_label = self.read_txt(self.judge_path + IContent)
             if len(original_label) == len(judge_label):
@@ -96,18 +100,14 @@ class AddressLabel(object):
                 else:  # If there are no inconsistencies.
                     final_label = np.array(judge_label)
                     final_label[:, [3, 4]] = final_label[:, [4, 3]]  # Swap columns 4 and 5 of the action judgment label
-
                     coded_list_label = self.generate_action_order(final_label, IContent)
                     # Specify the time window judgement
-                    replaced_list_label = self.replace_time_windows_judgment('31', '1', coded_list_label)
-                    replaced_list_label = self.replace_time_windows_judgment('26', '1', replaced_list_label)
-                    replaced_list_label = self.replace_time_windows_judgment('28', '1', replaced_list_label)
-                    replaced_list_label = self.replace_time_windows_judgment('25', '1', replaced_list_label)
+                    replaced_list_label = self.replace_time_windows_judgment(None, ['31', '26', '28', '25'], '1', coded_list_label)
                     # Save the final labels
                     save_name = self.final_path + IContent
                     np.savetxt(save_name, np.array(replaced_list_label), delimiter=',', fmt='%s')
+                    print("\"{:s}\" has done.".format(IContent))
                     pass
-                # raise RuntimeError
                 pass
 
             else:
@@ -115,6 +115,8 @@ class AddressLabel(object):
                 logger.info("\"{:s}\" The length of original label is different from judge label !!!".format(IContent))
                 continue
                 pass
+            break
+            raise RuntimeError
             pass
         pass
 
@@ -125,7 +127,7 @@ class AddressLabel(object):
         :param sequence:The name of the label file being operated on with a str type.
         :return:Action coded label data with a list type.
         """
-        assert (final_label is None) and (sequence is None), "The input parameter cannot be empty"
+        assert (final_label is not None) and (sequence is not None), "The input parameter cannot be empty"
         list_final_label = final_label.tolist()
         for i, i_content in enumerate(final_label):
             if i_content[0] in self.action_chinese_name:
@@ -140,22 +142,30 @@ class AddressLabel(object):
         pass
 
     @staticmethod
-    def replace_time_windows_judgment(action_order=None, your_judgement='1', final_label=None):
+    def replace_time_windows_judgment(action_order=None, action_order_array=None, your_judgement='1', final_label=None):
         """
         Manually specify that the time window judgement for certain actions is determined to be 1 or 2.
-        :param action_order:The action order that you want to replace i.e., 1-67.
+        :param action_order:The action order that you want to replace i.e., '1'-'67'.
         :param your_judgement:Your judgement i.e., 1 or 2.
+        :param action_order_array:The action order array that you want to replace i.e., ['1','4','67'].
         :param final_label:Labels that are not action coded with a list type.
         :return:Time windows judgement replaced label data with a list type.
         """
-        assert (final_label is None) and (action_order is None), "The input parameter cannot be empty"
         list_final_label = final_label
-        for i, i_content in enumerate(final_label):
-            if i_content[0] == action_order:
-                list_final_label[i][3] = your_judgement
+        if action_order_array is None and action_order is not None and final_label is not None:
+            for i, i_content in enumerate(final_label):
+                if i_content[0] == action_order:
+                    list_final_label[i][3] = your_judgement
+                    pass
                 pass
-            else:
-                continue
+            pass
+        if action_order_array is not None and action_order is None and final_label is not None:
+            for i, i_content in enumerate(final_label):
+                for j in action_order_array:
+                    if i_content[0] == j:
+                        list_final_label[i][3] = your_judgement
+                        pass
+                    pass
                 pass
             pass
         return list_final_label
@@ -168,6 +178,7 @@ if __name__ == "__main__":
     start_time = time.time()
     print("#" * 120)
     my_task = AddressLabel()
+    my_task.merge2labels_92_276_a03()
     # my_task.merge2labels()
     # label_content = my_task.read_txt(my_task.temp_path + my_task.temp_file)
     # original_label = my_task.read_txt(my_task.temp_path + "P001T001S003_o.txt")
