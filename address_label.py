@@ -23,9 +23,10 @@ class AddressLabel(object):
     The class is for generating the final label with including some function for dealing label array.
     """
     def __init__(self):
-        self.final_path = "D:/pycharm_project/temp/1_91_a01/final_label/"
-        self.root_path = "D:/pycharm_project/temp/1_91_a01/original_label/"
-        self.judge_path = "D:/pycharm_project/temp/1_91_a01/judge_label/"
+        self.dst_name = "1_91_a06"
+        self.final_path = "D:/pycharm_project/temp/{:s}/final_label/".format(self.dst_name)
+        self.root_path = "D:/pycharm_project/temp/{:s}/original_label/".format(self.dst_name)
+        self.judge_path = "D:/pycharm_project/temp/{:s}/judge_label/".format(self.dst_name)
         self.action_chinese_name = ['戴眼镜', '脱帽', '敬礼', '梳头', '向前扔东西', '自拍', '读书', '签字', '打字', '打电话',
                                     '捡东西', '看手表', '咳嗽', '喝水', '吃东西', '抽烟', '擦汗', '修眉', '玩手机', '散步',
                                     '转身', '快速走', '慢跑', '快速跑', '跳绳', '原地跳两下', '趴下', '跌倒', '后仰躺下',
@@ -37,6 +38,7 @@ class AddressLabel(object):
         self.temp_path = "D:/pycharm_project/temp/"
         self.temp_file = "test_label.txt"
         self.action_error = {"Total": 0}
+        self.temp_store_path = "./log/{:s}.json"
         pass
 
     @staticmethod
@@ -96,15 +98,17 @@ class AddressLabel(object):
                     pass
                 if statistical_info is 2:
                     # --Count the number of action errors--
-                    self.count_action_judge_error(judge_label, 4, IContent)
+                    self.count_action_judge_error(judge_label, 3, IContent)
                     pass
                 if statistical_info is None:  # There are no inconsistencies.
                     final_label = np.array(judge_label)
                     final_label[:, [3, 4]] = final_label[:, [4, 3]]  # Swap columns 4 and 5 of the action judgment label
                     coded_list_label = self.generate_action_order(final_label, IContent)
-                    # Specify the time window judgement
+
+                    # --Specify the time window judgement--
                     # replaced_list_label = self.replace_time_windows_judgment(None, ['31', '26', '28', '25'], '1', coded_list_label)
-                    # Save the final labels
+
+                    # --Save the final labels--
                     final_list_label = coded_list_label
                     save_name = self.final_path + IContent
                     np.savetxt(save_name, np.array(final_list_label), delimiter=',', fmt='%s')
@@ -120,6 +124,7 @@ class AddressLabel(object):
             # break
             # raise RuntimeError
             pass
+        self.store_json(self.temp_store_path.format("1_a06_judge_action_error"), self.action_error)
         pass
 
     def generate_action_order(self, final_label=None, sequence=None):
@@ -242,10 +247,11 @@ if __name__ == "__main__":
     start_time = time.time()
     print("#" * 120)
     my_task = AddressLabel()
-    my_task.merge2labels(2)
-    print(my_task.action_error)
-    temp_path = "./log/judge_time_windows_error.json"
-    my_task.store_json(temp_path, my_task.action_error)
+    my_task.merge2labels()
+
+    # print(my_task.action_error)
+    # temp_path = "./log/judge_time_windows_error.json"
+    # my_task.store_json(temp_path, my_task.action_error)
     # my_task.compare_original_judge(my_task.root_path, my_task.judge_path)
     # my_task.merge2labels_92_276_a03()
     # my_task.merge2labels()
