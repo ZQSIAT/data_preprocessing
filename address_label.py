@@ -11,22 +11,18 @@ import pandas as pd
 import logging
 import json
 
-logging.basicConfig(level=logging.DEBUG,
-                    filename='./log/{:s}_address_label.log'.format(time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())),
-                    datefmt='%Y/%m/%d %H:%M:%S',
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(lineno)d - %(module)s - %(message)s')
-logger = logging.getLogger(__name__)
-
 
 class AddressLabel(object):
     """
     The class is for generating the final label with including some function for dealing label array.
     """
     def __init__(self):
-        self.dst_name = "1_91_a06"
-        self.final_path = "D:/pycharm_project/temp/{:s}/final_label/".format(self.dst_name)
-        self.root_path = "D:/pycharm_project/temp/{:s}/original_label/".format(self.dst_name)
-        self.judge_path = "D:/pycharm_project/temp/{:s}/judge_label/".format(self.dst_name)
+        self.dst_name = "1-91-a07"
+        self.json_name = "original_action"
+        self.final_path = "Z:/DATASET_BACKUP/LABEL/new_label/{:s}/final_label/".format(self.dst_name)
+        self.root_path = "Z:/DATASET_BACKUP/LABEL/new_label/{:s}/现在输出标签/".format(self.dst_name)
+        self.judge_path = "Z:/DATASET_BACKUP/LABEL/new_label/{:s}/判断后的输出标签/".format(self.dst_name)
+        self.log_path = "Z:/DATASET_BACKUP/LABEL/new_label/{:s}/log/".format(self.dst_name)
         self.action_chinese_name = ['戴眼镜', '脱帽', '敬礼', '梳头', '向前扔东西', '自拍', '读书', '签字', '打字', '打电话',
                                     '捡东西', '看手表', '咳嗽', '喝水', '吃东西', '抽烟', '擦汗', '修眉', '玩手机', '散步',
                                     '转身', '快速走', '慢跑', '快速跑', '跳绳', '原地跳两下', '趴下', '跌倒', '后仰躺下',
@@ -38,7 +34,7 @@ class AddressLabel(object):
         self.temp_path = "D:/pycharm_project/temp/"
         self.temp_file = "test_label.txt"
         self.action_error = {"Total": 0}
-        self.temp_store_path = "./log/{:s}.json"
+        self.temp_store_path = self.log_path + "{:s}-{:s}_error.json".format(self.dst_name, self.json_name)
         pass
 
     @staticmethod
@@ -98,7 +94,7 @@ class AddressLabel(object):
                     pass
                 if statistical_info is 2:
                     # --Count the number of action errors--
-                    self.count_action_judge_error(judge_label, 3, IContent)
+                    self.count_action_judge_error(original_label, 3, IContent)
                     pass
                 if statistical_info is None:  # There are no inconsistencies.
                     final_label = np.array(judge_label)
@@ -124,7 +120,9 @@ class AddressLabel(object):
             # break
             # raise RuntimeError
             pass
-        self.store_json(self.temp_store_path.format("1_a06_judge_action_error"), self.action_error)
+        if statistical_info is 2:
+            self.store_json(self.temp_store_path, self.action_error)
+            pass
         pass
 
     def generate_action_order(self, final_label=None, sequence=None):
@@ -205,8 +203,8 @@ class AddressLabel(object):
         judge_action = np.array(judge_label)[:, 3]
         if np.where(original_action != judge_action)[0].size > 0:
             for ii in np.where(original_action != judge_action)[0]:
-                print("{:s}, {:d}".format(file_name, ii + 1))
-                logger.info("{:s}, {:d}".format(file_name, ii + 1))
+                print("Different {:s}, {:d}".format(file_name, ii + 1))
+                logger.info("Different {:s}, {:d}".format(file_name, ii + 1))
                 pass
             pass
         pass
@@ -229,8 +227,8 @@ class AddressLabel(object):
                 else:
                     self.action_error[label[ii][0]] = self.action_error[label[ii][0]] + 1
                     pass
-                print("{:s}, {:d}".format(file_name, ii + 1))
-                logger.info("{:s}, {:d}".format(file_name, ii + 1))
+                print("{:s} {:s}, {:d}".format(self.json_name, file_name, ii + 1))
+                logger.info("{:s} {:s}, {:d}".format(self.json_name, file_name, ii + 1))
                 pass
             pass
 
@@ -247,7 +245,19 @@ if __name__ == "__main__":
     start_time = time.time()
     print("#" * 120)
     my_task = AddressLabel()
-    my_task.merge2labels()
+    logging.basicConfig(level=logging.DEBUG,
+                        filename='{:s}{:s}_address_label.log'.format(my_task.log_path, time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())),
+                        datefmt='%Y/%m/%d %H:%M:%S',
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(lineno)d - %(module)s - %(message)s')
+    logger = logging.getLogger(__name__)
+
+    if not os.path.exists(my_task.final_path):
+        os.mkdir(my_task.final_path)
+        pass
+    if not os.path.exists(my_task.log_path):
+        os.mkdir(my_task.log_path)
+        pass
+    my_task.merge2labels(2)
 
     # print(my_task.action_error)
     # temp_path = "./log/judge_time_windows_error.json"
