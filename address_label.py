@@ -17,8 +17,8 @@ class AddressLabel(object):
     The class is for generating the final label with including some function for dealing label array.
     """
     def __init__(self):
-        self.dst_name = "1-91-a07"
-        self.json_name = "original_action"
+        self.dst_name = "92-276-a01"
+        self.json_name = "judge_action"  # judge_action judge_time_windows original_action
         self.final_path = "Z:/DATASET_BACKUP/LABEL/new_label/{:s}/final_label/".format(self.dst_name)
         self.root_path = "Z:/DATASET_BACKUP/LABEL/new_label/{:s}/现在输出标签/".format(self.dst_name)
         self.judge_path = "Z:/DATASET_BACKUP/LABEL/new_label/{:s}/判断后的输出标签/".format(self.dst_name)
@@ -94,7 +94,7 @@ class AddressLabel(object):
                     pass
                 if statistical_info is 2:
                     # --Count the number of action errors--
-                    self.count_action_judge_error(original_label, 3, IContent)
+                    self.count_action_judge_error(judge_label, 3, IContent)
                     pass
                 if statistical_info is None:  # There are no inconsistencies.
                     final_label = np.array(judge_label)
@@ -245,18 +245,17 @@ if __name__ == "__main__":
     start_time = time.time()
     print("#" * 120)
     my_task = AddressLabel()
-    logging.basicConfig(level=logging.DEBUG,
-                        filename='{:s}{:s}_address_label.log'.format(my_task.log_path, time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())),
-                        datefmt='%Y/%m/%d %H:%M:%S',
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(lineno)d - %(module)s - %(message)s')
-    logger = logging.getLogger(__name__)
-
     if not os.path.exists(my_task.final_path):
         os.mkdir(my_task.final_path)
         pass
     if not os.path.exists(my_task.log_path):
         os.mkdir(my_task.log_path)
         pass
+    logging.basicConfig(level=logging.DEBUG,
+                        filename='{:s}{:s}_address_label.log'.format(my_task.log_path, time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())),
+                        datefmt='%Y/%m/%d %H:%M:%S',
+                        format='%(asctime)s - %(name)s - %(levelname)s - %(lineno)d - %(module)s - %(message)s')
+    logger = logging.getLogger(__name__)
     my_task.merge2labels(2)
 
     # print(my_task.action_error)
