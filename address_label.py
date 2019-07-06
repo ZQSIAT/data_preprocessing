@@ -283,49 +283,6 @@ if __name__ == "__main__":
                         format='%(asctime)s - %(name)s - %(levelname)s - %(lineno)d - %(module)s - %(message)s')
     logger = logging.getLogger(__name__)
     my_task.merge2labels(my_task.present_parameter[3])
-
-    # print(my_task.action_error)
-    # temp_path = "./log/judge_time_windows_error.json"
-    # my_task.store_json(temp_path, my_task.action_error)
-    # my_task.compare_original_judge(my_task.root_path, my_task.judge_path)
-    # my_task.merge2labels_92_276_a03()
-    # my_task.merge2labels()
-    # label_content = my_task.read_txt(my_task.temp_path + my_task.temp_file)
-    # original_label = my_task.read_txt(my_task.temp_path + "P001T001S003_o.txt")
-    # judge_label = my_task.read_txt(my_task.temp_path + "P001T001S003_j.txt")
-    # if len(original_label) == len(judge_label):
-    #
-    #     print(np.array(original_label)[:, 3])
-    #     print(np.array(judge_label)[:, 3])
-    #     original_action_determine = np.array(original_label)[:, 3]
-    #     judge_action_determine = np.array(judge_label)[:, 3]
-    #     contrast = original_action_determine != judge_action_determine
-    #     print(np.where(contrast)[0].size > 0)
-    #
-    #     final_label = np.array(judge_label)
-    #     # print(final_label)
-    #     final_label[:, [3, 4]] = final_label[:, [4, 3]]
-    #
-    #     # print(final_label)
-    #     list_final_label = final_label.tolist()
-    #     for i, i_content in enumerate(list_final_label):
-    #         # print(i, '\n', i_content)
-    #         print(i_content[0])
-    #         list_final_label[i][0] = str(my_task.action_chinese_name.index(i_content[0]) + 1)
-    #         pass
-    #     print(list_final_label)
-    #
-    #     np.savetxt('test.txt', np.array(list_final_label), delimiter=',', fmt='%s')
-    #     # file = open('file_name.txt', 'w')
-    #     # file.write(str(list_final_label))
-    #     # file.close()
-    #     pass
-    # print(np.array(label_content)[:, 3], '\n', len(label_content))
-    # np.savetxt('test.txt', np.array(label_content), delimiter=',', fmt='%s')
-    # label_list = my_task.generate_list()
-    # print(label_list[1])
-    # processing by pool map
-    # p = Pool(8)
     end_time = time.time()
     print("#" * 120)
     print("Finished! Time elapse: {:.2f} minutes.".format((end_time - start_time) / 60.0))
