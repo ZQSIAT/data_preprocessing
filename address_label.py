@@ -17,8 +17,12 @@ class AddressLabel(object):
     The class is for generating the final label with including some function for dealing label array.
     """
     def __init__(self):
-        self.dst_name = "92-276-a01"
-        self.json_name = "judge_action"  # judge_action judge_time_windows original_action
+        self.dst_name = "1-91-a01"
+        self.parameters = [['original_action', 'original', 3, 1], ['original_action', 'original', 3, 2],
+                           ['judge_action', 'judge', 3, 2], ['judge_time_windows', 'judge', 4, 2], ['judge_time_windows', 'judge', 4, None]]
+        self.present_parameter = self.parameters[0]
+
+        self.json_name = self.present_parameter[0]  # judge_action judge_time_windows original_action
         self.final_path = "Z:/DATASET_BACKUP/LABEL/new_label/{:s}/final_label/".format(self.dst_name)
         self.root_path = "Z:/DATASET_BACKUP/LABEL/new_label/{:s}/现在输出标签/".format(self.dst_name)
         self.judge_path = "Z:/DATASET_BACKUP/LABEL/new_label/{:s}/判断后的输出标签/".format(self.dst_name)
@@ -94,7 +98,13 @@ class AddressLabel(object):
                     pass
                 if statistical_info is 2:
                     # --Count the number of action errors--
-                    self.count_action_judge_error(judge_label, 3, IContent)
+                    if self.present_parameter[1] is "original":
+                        count_label = original_label
+                        pass
+                    else:
+                        count_label = judge_label
+                        pass
+                    self.count_action_judge_error(count_label, self.present_parameter[2], IContent)
                     pass
                 if statistical_info is None:  # There are no inconsistencies.
                     final_label = np.array(judge_label)
@@ -199,12 +209,23 @@ class AddressLabel(object):
         :param file_name: Label file name.
         :return: No return.
         """
-        original_action = np.array(original_label)[:, 3]
-        judge_action = np.array(judge_label)[:, 3]
-        if np.where(original_action != judge_action)[0].size > 0:
-            for ii in np.where(original_action != judge_action)[0]:
-                print("Different {:s}, {:d}".format(file_name, ii + 1))
-                logger.info("Different {:s}, {:d}".format(file_name, ii + 1))
+        # print(file_name, len(np.array(original_label).shape))
+        if len(np.array(original_label).shape) is 1:
+            print("Original label damaged {:s}".format(file_name))
+            logger.info("Original label damaged {:s}".format(file_name))
+            pass
+        if len(np.array(judge_label).shape) is 1:
+            print("Judge label damaged {:s}".format(file_name))
+            logger.info("Judge label damaged {:s}".format(file_name))
+            pass
+        if len(np.array(judge_label).shape) is 2 and len(np.array(original_label).shape) is 2:
+            original_action = np.array(original_label)[:, 3]
+            judge_action = np.array(judge_label)[:, 3]
+            if np.where(original_action != judge_action)[0].size > 0:
+                for ii in np.where(original_action != judge_action)[0]:
+                    print("Different {:s}, {:d}, {:s}".format(file_name, ii + 1, original_label[ii][0]))
+                    logger.info("Different {:s}, {:d}, {:s}".format(file_name, ii + 1, original_label[ii][0]))
+                    pass
                 pass
             pass
         pass
@@ -217,20 +238,23 @@ class AddressLabel(object):
         :param file_name: Label file name.
         :return: No return.
         """
-        judge = np.array(label)[:, judge_type]
-        if np.where(judge == '2')[0].size > 0:
-            for ii in np.where(judge == '2')[0]:
-                self.action_error["Total"] = self.action_error["Total"] + 1
-                if not label[ii][0] in self.action_error.keys():
-                    self.action_error.update({label[ii][0]: 1})
+        if len(np.array(label).shape) is 2:
+            judge = np.array(label)[:, judge_type]
+            if np.where(judge == '2')[0].size > 0:
+                for ii in np.where(judge == '2')[0]:
+                    self.action_error["Total"] = self.action_error["Total"] + 1
+                    if not label[ii][0] in self.action_error.keys():
+                        self.action_error.update({label[ii][0]: 1})
+                        pass
+                    else:
+                        self.action_error[label[ii][0]] = self.action_error[label[ii][0]] + 1
+                        pass
+                    print("{:s} {:s}, {:d}, {:s}".format(self.json_name, file_name, ii + 1, label[ii][0]))
+                    logger.info("{:s} {:s}, {:d}, {:s}".format(self.json_name, file_name, ii + 1, label[ii][0]))
                     pass
-                else:
-                    self.action_error[label[ii][0]] = self.action_error[label[ii][0]] + 1
-                    pass
-                print("{:s} {:s}, {:d}".format(self.json_name, file_name, ii + 1))
-                logger.info("{:s} {:s}, {:d}".format(self.json_name, file_name, ii + 1))
                 pass
             pass
+        pass
 
     @staticmethod
     def store_json(store_path, data):
@@ -245,6 +269,8 @@ if __name__ == "__main__":
     start_time = time.time()
     print("#" * 120)
     my_task = AddressLabel()
+    # my_task.compare_original_judge(my_task.root_path, my_task.judge_path)
+    # raise RuntimeError
     if not os.path.exists(my_task.final_path):
         os.mkdir(my_task.final_path)
         pass
@@ -256,7 +282,7 @@ if __name__ == "__main__":
                         datefmt='%Y/%m/%d %H:%M:%S',
                         format='%(asctime)s - %(name)s - %(levelname)s - %(lineno)d - %(module)s - %(message)s')
     logger = logging.getLogger(__name__)
-    my_task.merge2labels(2)
+    my_task.merge2labels(my_task.present_parameter[3])
 
     # print(my_task.action_error)
     # temp_path = "./log/judge_time_windows_error.json"
