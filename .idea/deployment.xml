@@ -1,36 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="On explicit save action" serverName="zqs@10.10.1.47:22" autoUploadExternalChanges="true">
+  <component name="PublishConfigData" serverName="10.10.1.47">
     <serverData>
-      <paths name="OMV">
-        <serverdata>
-          <mappings>
-            <mapping local="$PROJECT_DIR$" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="hly@10.10.1.36:22">
-        <serverdata>
-          <mappings>
-            <mapping local="$PROJECT_DIR$" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="lhj@10.10.1.40:22">
-        <serverdata>
-          <mappings>
-            <mapping local="$PROJECT_DIR$" web="/" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="zqs@10.10.1.47:22">
+      <paths name="10.10.1.47">
         <serverdata>
           <mappings>
             <mapping deploy="/dataset-preprocessing" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>
+      <paths name="zqs@10.10.1.47:22">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/pycharm_project_443" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
     </serverData>
-    <option name="myAutoUpload" value="ON_EXPLICIT_SAVE" />
   </component>
 </project>

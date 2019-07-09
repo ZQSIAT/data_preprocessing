@@ -17,10 +17,10 @@ class AddressLabel(object):
     The class is for generating the final label with including some function for dealing label array.
     """
     def __init__(self):
-        self.dst_name = "1-91-a01"
+        self.dst_name = "92-276-a05"
         self.parameters = [['original_action', 'original', 3, 1], ['original_action', 'original', 3, 2],
                            ['judge_action', 'judge', 3, 2], ['judge_time_windows', 'judge', 4, 2], ['judge_time_windows', 'judge', 4, None]]
-        self.present_parameter = self.parameters[0]
+        self.present_parameter = self.parameters[4]
 
         self.json_name = self.present_parameter[0]  # judge_action judge_time_windows original_action
         self.final_path = "Z:/DATASET_BACKUP/LABEL/new_label/{:s}/final_label/".format(self.dst_name)
