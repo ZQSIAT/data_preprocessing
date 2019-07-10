@@ -8,16 +8,18 @@ import json
 import cv2
 import csv
 import shutil as st
+from multiprocessing import Pool
 
 class AnalysisKinect(object):
     def __init__(self):
         self.perform_environment = [["/data/szj/data/", "/ssd_data/zqs/workspace/dataset-preprocessing/"],
                                     ["Z:/", "D:/pycharm_project/dataset_preprocessing/"]]
         self.dst_path = "DataSet1"
-        self.present_envir = self.perform_environment[1]
+        self.present_envir = self.perform_environment[0]
         self.hikvision_path = self.present_envir[0] + "Preprocessing_Test/{:s}/RGB_HIKVISION/".format(self.dst_path)
         self.kinect_path = self.present_envir[0] + "Preprocessing_Test/{:s}/KINECT/RGB_KINECT/".format(self.dst_path)
-        self.log_path = self.present_envir[1] + "/log/"
+        self.log_path = self.present_envir[1] + "log/"
+        self.s001_s007_30fps_avi_path = self.present_envir[0] + "Preprocessing_Test/{:s}/KINECT/S001_S007_30FPS_RGB_KINECT/".format(self.dst_path)
         self.logger = None
         self.analysis_frames = {"Total": [0]*19}
         self.analysis_duration = {"Total": [0.0]*19}
@@ -110,6 +112,26 @@ class AnalysisKinect(object):
         self.phase2_people_number = [self.names_alphabet.index(i)+1 for i in self.names_time[91:]]
         self.store_json_path = None
         self.store_csv_path = None
+        self.temp_list_path = self.log_path + "phase1_transform_rating.txt"
+        pass
+
+    def s001_s007_25fps_to_30fps_avi_kiniect(self, list_path):
+        for i, i_content in enumerate(list_path):
+            people = int(i_content[0][1:4])
+            operation = 1
+            if people not in self.operation1_people_number:
+                operation = 2
+                pass
+            repeat_time = int(i_content[0][5:8])
+            sequence = int(i_content[0][9:12])
+            for ii, camera in enumerate(range(16, 20)):
+                temp_avi_file_name = self.file_model.format(operation, people, camera, repeat_time, sequence, "avi")
+                transformed_frame = float(i_content[ii + 1])
+                self.trans_frame_rating_video(transformed_frame,
+                                              self.kinect_path + temp_avi_file_name,
+                                              self.s001_s007_30fps_avi_path + temp_avi_file_name)
+                pass
+            pass
         pass
 
     def generate_video_names(self, phase=1, video_type='mp4'):
@@ -216,11 +238,16 @@ class AnalysisKinect(object):
             pass
         pass
 
-    @staticmethod
-    def trans_frame_rating_video(transformed_frame=30, video_path=None, transformed_path=None):
+    def trans_frame_rating_video(self, transformed_frame=29.5, video_path=None, transformed_path=None):
         if os.path.exists(video_path) and not os.path.exists(transformed_path):
-            cmd_command = "ffmpeg -r {:d} -i {:s} -b 4096000 {:s}".format(transformed_frame, video_path, transformed_path)
+            cmd_command = "ffmpeg -r {:.1f} -i {:s} -b:v 4096000 {:s}".format(transformed_frame, video_path, transformed_path)
             os.system(cmd_command)
+            print("Video {:s} has been converted from 25 fps to {:.1f} fps".format(video_path.split('/')[-1], transformed_frame))
+            self.logger.info("Video {:s} has been converted from 25 fps to {:.1f} fps".format(video_path.split('/')[-1], transformed_frame))
+            pass
+        else:
+            print("Video {:s} conversion failed".format(video_path.split('/')[-1]))
+            self.logger.info("Video {:s} conversion failed".format(video_path.split('/')[-1]))
             pass
         pass
 
@@ -313,6 +340,16 @@ class AnalysisKinect(object):
         return f_content
         pass
 
+    @staticmethod
+    def split_video(src_video, begin_time, over_time, dst_video):
+        if os.path.exists(src_video) and not os.path.exists(dst_video):
+            cmd_command = "ffmpeg  -i {:s} -vcodec copy -acodec copy -ss {:s} -to {:s} {:s} -y".format(src_video, begin_time, over_time, dst_video)
+            os.system(cmd_command)
+            print("{:s} has been cut from {:s}.".format(dst_video, src_video))
+            # self.logger.info("{:s} has {:d} frames.".format(i_content, frame))
+            pass
+        pass
+
     pass
 
 
@@ -324,32 +361,62 @@ if __name__ == "__main__":
     my_task = AnalysisKinect()
     """
     # --move broken mp4 videos--
-    t_mp4_broken_log_path = my_task.log_path + "phase1_hikvision_mp4_broken.log"
-    t_mp4_broken_path = "Z:/Preprocessing_Test/DataSet1/temp_mp4_broken/"
+    t_mp4_broken_log_path = my_task.log_path + "phase1_mp4_cannot_use.txt"
+    t_mp4_broken_path = "Z:/Preprocessing_Test/DataSet1/temp_mp4_cannot_use/"
+
+    t_avi_broken_log_path = my_task.log_path + "phase1_avi_cannot_use.txt"
+    t_avi_broken_path = "Z:/Preprocessing_Test/DataSet1/temp_avi_cannot_use/"
+
     my_task.is_path_existed_if_no_mk_it(t_mp4_broken_path)
-    list_broken_mp4 = (my_task.read_txt(t_mp4_broken_log_path))
-    for ii, ii_content in enumerate(list_broken_mp4):
-        src = my_task.hikvision_path + ii_content[0]
-        dst = t_mp4_broken_path + ii_content[0]
+    my_task.is_path_existed_if_no_mk_it(t_avi_broken_path)
+
+    list_files = (my_task.read_txt(t_mp4_broken_log_path))
+
+    for ii, ii_content in enumerate(list_files):
+        temp_name = "O002" + ii_content[0]
+        if int(ii_content[0][1:4]) in my_task.operation1_people_number:
+            temp_name = "O001" + ii_content[0]
+            pass
+        src = my_task.hikvision_path + temp_name
+        dst = t_mp4_broken_path + temp_name
         my_task.move_files(src, dst)
         print("{:d} {:s} has done.".format(ii+1, ii_content[0]))
         pass
     raise RuntimeError
     """
-
     """
-    # --merge statistic of kinect and hikvision--
+    # --merge statistic of kinect and hikvision duration--
+
     t_k_path = my_task.log_path + "DataSet1_RGB_KINECT2019-07-08-12-30-05_statistic_frames.json"
-    t_h_path = my_task.log_path + "DataSet1_RGB_HIKVISION2019-07-09-00-03-53_statistic_frames.json"
-    t_m_j_path = my_task.log_path + "phase1_merged_statistic.json"
-    t_m_csv_path = my_task.log_path + "phase1_merged_statistic.csv"
+    t_h_path = my_task.log_path + "DataSet1_RGB_HIKVISION2019-07-09-00-03-53_statistic_duration.json"
+    t_m_j_path = my_task.log_path + "phase1_merged_duration_frames.json"
+    t_m_csv_path = my_task.log_path + "phase1_merged_duration_frames.csv"
     merged_dict = my_task.merge_frame_statistic(my_task.read_json(t_k_path), my_task.read_json(t_h_path))
     my_task.store_json(t_m_j_path, merged_dict)
     my_task.write_csv(merged_dict, t_m_csv_path)
     raise RecursionError
+
+    """
+    """
+    # --cutting--
+    begin_time = "00:00:00.000"
+    over_time = "00:01:05.000"  # avi "00:01:05.000"
+    temp_src = "Z:/Preprocessing_Test/DataSet1/temp_avi_cannot_use/"
+    temp_dst = "Z:/Preprocessing_Test/DataSet1/temp_avi_can_use/"
+    my_task.is_path_existed_if_no_mk_it(temp_dst)
+    name = "O001P082C{:03d}T001S005.avi"
+    for i in range(16, 20):
+        name_present = name.format(i)
+        src = temp_src + name_present
+        dst = temp_dst + name_present
+        my_task.split_video(src, begin_time, over_time, dst)
+        pass
+    raise RuntimeError
     """
     my_task.log_parameter(my_task.log_path)
-    my_task.statistic_frames(my_task.hikvision_path)
+    # my_task.statistic_frames(my_task.hikvision_path)
+    file_list = my_task.read_txt(my_task.temp_list_path)
+    my_task.s001_s007_25fps_to_30fps_avi_kiniect(file_list)
 
     end_time = time.time()
     print("#" * 120)

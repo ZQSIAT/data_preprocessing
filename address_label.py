@@ -17,10 +17,12 @@ class AddressLabel(object):
     The class is for generating the final label with including some function for dealing label array.
     """
     def __init__(self):
-        self.dst_name = "92-276-a05"
+        self.dst_name = "92-276-a04"
         self.parameters = [['original_action', 'original', 3, 1], ['original_action', 'original', 3, 2],
-                           ['judge_action', 'judge', 3, 2], ['judge_time_windows', 'judge', 4, 2], ['judge_time_windows', 'judge', 4, None]]
-        self.present_parameter = self.parameters[4]
+                           ['judge_action', 'judge', 3, 2], ['judge_time_windows', 'judge', 4, 2],
+                           ['judge_time_windows', 'judge', 4, None], ['final_action_judge', 4],
+                           ['final_time_windows_judge', 3]]
+        self.present_parameter = self.parameters[6]
 
         self.json_name = self.present_parameter[0]  # judge_action judge_time_windows original_action
         self.final_path = "Z:/DATASET_BACKUP/LABEL/new_label/{:s}/final_label/".format(self.dst_name)
@@ -69,8 +71,9 @@ class AddressLabel(object):
         print(sheet1.row(0)[0].value)
         pass
 
-    def generate_list(self):
-        original_path = self.root_path
+    @staticmethod
+    def generate_list(original_path):
+        # original_path = self.root_path
         path_list = []
         file_list = os.listdir(original_path)
         for i, ICount in enumerate(file_list):
@@ -83,7 +86,7 @@ class AddressLabel(object):
         """
         Merge the original label and judgment label.
         """
-        label_list = self.generate_list()
+        label_list = self.generate_list(self.root_path)
         for i, IContent in enumerate(label_list[1]):
             if os.path.exists(self.final_path + IContent):
                 print("\"{:s}\" has done.".format(IContent))
@@ -271,18 +274,25 @@ if __name__ == "__main__":
     my_task = AddressLabel()
     # my_task.compare_original_judge(my_task.root_path, my_task.judge_path)
     # raise RuntimeError
-    if not os.path.exists(my_task.final_path):
-        os.mkdir(my_task.final_path)
-        pass
-    if not os.path.exists(my_task.log_path):
-        os.mkdir(my_task.log_path)
-        pass
+    # if not os.path.exists(my_task.final_path):
+    #     os.mkdir(my_task.final_path)
+    #     pass
+    # if not os.path.exists(my_task.log_path):
+    #     os.mkdir(my_task.log_path)
+    #     pass
     logging.basicConfig(level=logging.DEBUG,
                         filename='{:s}{:s}_address_label.log'.format(my_task.log_path, time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())),
                         datefmt='%Y/%m/%d %H:%M:%S',
                         format='%(asctime)s - %(name)s - %(levelname)s - %(lineno)d - %(module)s - %(message)s')
     logger = logging.getLogger(__name__)
-    my_task.merge2labels(my_task.present_parameter[3])
+    # my_task.merge2labels(my_task.present_parameter[3])
+    t_file_list = my_task.generate_list(my_task.final_path)
+    for i, i_content in enumerate(t_file_list[1]):
+        t_label = my_task.read_txt(my_task.final_path + i_content)
+        my_task.count_action_judge_error(t_label, my_task.present_parameter[1], i_content)
+        pass
+    my_task.store_json(my_task.temp_store_path, my_task.action_error)
+
     end_time = time.time()
     print("#" * 120)
     print("Finished! Time elapse: {:.2f} minutes.".format((end_time - start_time) / 60.0))
