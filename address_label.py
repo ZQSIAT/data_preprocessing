@@ -17,7 +17,7 @@ class AddressLabel(object):
     The class is for generating the final label with including some function for dealing label array.
     """
     def __init__(self):
-        self.dst_name = "92-276-a04"
+        self.dst_name = "92-276-a05"
         self.parameters = [['original_action', 'original', 3, 1], ['original_action', 'original', 3, 2],
                            ['judge_action', 'judge', 3, 2], ['judge_time_windows', 'judge', 4, 2],
                            ['judge_time_windows', 'judge', 4, None], ['final_action_judge', 4],
