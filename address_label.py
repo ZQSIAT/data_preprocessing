@@ -17,7 +17,7 @@ class AddressLabel(object):
     The class is for generating the final label with including some function for dealing label array.
     """
     def __init__(self):
-        self.dst_name = "92-276-a05"
+        self.dst_name = "DataSet2"
         self.parameters = [['original_action', 'original', 3, 1], ['original_action', 'original', 3, 2],
                            ['judge_action', 'judge', 3, 2], ['judge_time_windows', 'judge', 4, 2],
                            ['judge_time_windows', 'judge', 4, None], ['final_action_judge', 4],
@@ -41,6 +41,167 @@ class AddressLabel(object):
         self.temp_file = "test_label.txt"
         self.action_error = {"Total": 0}
         self.temp_store_path = self.log_path + "{:s}-{:s}_error.json".format(self.dst_name, self.json_name)
+
+        self.final_label_path = "Z:/DATASET_BACKUP/LABEL/new_label/final_label_all/"
+        self.src_video_path = "Z:/publish_data/{:s}/RGB_HIKVISION_CAPTURE/".format(self.dst_name)
+        self.dst_video_path = "Z:/publish_data/{:s}/temp_error_trimmed_video/".format(self.dst_name)
+        self.file_model = "O{:03d}P{:03d}C{:03d}T{:03d}S{:03d}A{:03d}.{:s}"
+        self.file_suffixes = "mp4"
+        self.names_alphabet = ["cairuilin", "caojunhai", "changhongguang", "changming", "changxiangxu", "chengjiawen",
+                               "chenhongxu", "chenhongyu", "chenjialing", "chenjiangtao", "chenjiaxing", "chenjinbao",
+                               "chenliaoran", "chenming", "chenmingting", "chenpeng", "chentianxiao", "chenwenjie",
+                               "chenxianger", "chenyanxia", "chenyipeng", "chenyizhu", "chenyongcai", "chenyongfa",
+                               "chenyongkang", "chenyu", "chenzejia", "chenzhuo", "dengjun", "dengliucheng", "dongyijing",
+                               "dutao", "duxiaomeng", "fangyue", "fanjilei", "fanxiaoyuan", "fuchenjie", "gaochunbo",
+                               "gaoyiqian", "geminghui", "gongliang", "gongyue", "guhaoying", "guoda", "guojunguang",
+                               "guoqiong", "hanbo", "hannana", "haojingxuan", "haoluoying", "hejiawen", "hejiemin",
+                               "huangchi", "huanghaiyan", "huangjianan", "huangshuxian", "huangweicong", "huangweijuan",
+                               "huangxiaoqin", "huangxiaoye", "huangxuanli", "huangzihang", "hujing", "huxinyan",
+                               "huyueyan", "huzeming", "jiangjie", "jiangwenyao", "jiangzhiming", "jinxiaowan", "jishujian",
+                               "kangping", "laiqiqi", "laixinjie", "laiyingru", "liangxiaosi", "lianroumin", "lianshengxiong",
+                               "libingbing", "lichuanfu", "lihongjian", "lijiamin", "lijianyao", "limeng", "limin", "limingzhao",
+                               "limuyou", "linchuang", "linjiaming", "linjiaqi", "linjiawei", "linjiaxin", "linlanfang",
+                               "linshiyi", "linyanfei", "linyue", "liqiang", "liqianying", "lisinan", "liuanqi", "liuboyi",
+                               "liuchangdong", "liucheng", "liujia", "liujianeng", "liujinmeng", "liuxinwen", "liuxusheng",
+                               "liuyaqi", "liuyuan", "liuyuxiang", "liuzhao", "liwen", "lixiaokai", "lixingxing", "lixueyi",
+                               "liyang", "liyiling", "liyongshun", "liyuqin", "lizeshun", "lizhangjian", "lizhitao",
+                               "lizihao", "longshixiao", "luchengzhi", "luchunxian", "lukaijie", "luojiangliu", "luojianming",
+                               "luokaiqian", "luowei", "lvdan", "lvjingya", "maijinhui", "majiake", "mayizhen", "moningkai",
+                               "musainan", "niebeina", "nijiangpeng", "niuyuan", "ouyangpei", "pangwenjun", "panjiadong",
+                               "penglingxiu", "pengsongqiao", "pengxiaobin", "qianyinqiu", "qiujinyue", "quyangyang",
+                               "renjiao", "renpei", "rongchuyu", "ruanpanpan", "shangpeihan", "shangtianyu", "shenguibao",
+                               "shujun", "sunshijie", "sunyuyao", "suoya", "sushuiqing", "suzhilong", "tanghuan",
+                               "tangjunzhi", "tangshi", "tangwenjie", "tantiancheng", "tanyuanqi", "taoxiudian",
+                               "tianfangbi", "tianyanling", "tujiali", "wangbaoliang", "wangchao", "wangjing", "wangjuan",
+                               "wangkewei", "wangsi", "wangxingyong", "wangxinnian", "wangxiufang", "wangying",
+                               "wangzhicheng", "wanqiao", "weiliyang", "wengsifan", "wuhaisi", "wuhaitao", "wuhongzhen",
+                               "wutong", "wuweixuan", "wuxudong", "xiaminghui", "xianglei", "xiangli", "xiaofen",
+                               "xiaozhuo", "xiegang", "xiele", "xiezhuolin", "xiongguangyang", "xiongwei", "xubingqi",
+                               "xujiangyao", "xujiaohao", "xujiayang", "xujinshuang", "xuliang", "xupei", "xuxiao", "xuyue",
+                               "yanghan", "yangkai", "yangkaibo", "yangruohan", "yangweijie", "yangwensi", "yangyuanyuan",
+                               "yangzhaonan", "yangzhiguang", "yanyubai", "yaoyufeng", "yejiexia", "yinli", "yuandawei",
+                               "yujunyi", "yurongjian", "zanjianhuan", "zengning", "zhangbaowen", "zhangbensong",
+                               "zhangge", "zhanghang", "zhangjin", "zhangjunjie", "zhangkuiqing", "zhangna", "zhangshenghai",
+                               "zhangxiangnan", "zhangxiaohan", "zhangxinyu", "zhangyan", "zhangyingkui", "zhangzongxin",
+                               "zhanjiaxuan", "zhaofeng", "zhaohaoda", "zhaoqingsong", "zhaoshilin", "zhaotaoling",
+                               "zhaowengui", "zhaoyuliang", "zhaozhicheng", "zhengdanna", "zhenglimeng", "zhengshaoxuan",
+                               "zhengzegeng", "zhengzhicheng", "zhongkaiyu", "zhongxinyu", "zhongyankun", "zhoulibing",
+                               "zhoulikai", "zhouqiuming", "zhouweixiao", "zhouxianhang", "zhuangyingzhen", "zhujiayi",
+                               "zhujingxian", "zhulei", "zhurongxiang", "zhuyaping", "zhuzhenkun", "zhuzhenye"]
+        self.names_time = ['zhuyaping', 'chenyipeng', 'sunshijie', 'haoluoying', 'lihongjian', 'fanxiaoyuan', 'guojunguang',
+                           'tianyanling', 'liqiang', 'shenguibao', 'linchuang', 'liuyuxiang', 'haojingxuan', 'liuyuan',
+                           'zhangshenghai', 'xiaozhuo', 'huangshuxian', 'huanghaiyan', 'linyanfei', 'zhaotaoling',
+                           'liujinmeng', 'lianroumin', 'chenjinbao', 'huangweijuan', 'lukaijie', 'zhongkaiyu', 'wangchao',
+                           'huangchi', 'maijinhui', 'lianshengxiong', 'linyue', 'zhulei', 'hujing', 'zhoulibing',
+                           'liujianeng', 'zhengshaoxuan', 'tanyuanqi', 'laixinjie', 'yangruohan', 'zhangyingkui', 'liwen',
+                           'lijiamin', 'zhengzegeng', 'luowei', 'chenjialing', 'guhaoying', 'wuhongzhen', 'linjiawei',
+                           'laiyingru', 'lisinan', 'zhoulikai', 'yangweijie', 'renpei', 'gongliang', 'weiliyang',
+                           'zhengzhicheng', 'xiezhuolin', 'zhangkuiqing', 'tangwenjie', 'huangxiaoqin', 'panjiadong',
+                           'lvdan', 'wangxinnian', 'laiqiqi', 'zhenglimeng', 'liangxiaosi', 'linjiaqi', 'chenjiaxing',
+                           'shangtianyu', 'pengxiaobin', 'ruanpanpan', 'guoqiong', 'sushuiqing', 'huangzihang',
+                           'huangxiaoye', 'gongyue', 'tianfangbi', 'wangjing', 'wuxudong', 'xiaofen', 'chenhongyu',
+                           'suzhilong', 'dengliucheng', 'gaochunbo', 'fuchenjie', 'caojunhai', 'zhongxinyu',
+                           'ouyangpei', 'jinxiaowan', 'geminghui', 'zhanjiaxuan', 'luokaiqian', 'pengsongqiao',
+                           'huzeming', 'zhuangyingzhen', 'limeng', 'yinli', 'quyangyang', 'musainan', 'shujun',
+                           'zhengdanna', 'yanghan', 'yangzhiguang', 'zhanghang', 'nijiangpeng', 'liyang', 'zhongyankun',
+                           'chenzhuo', 'chenyu', 'luojianming', 'chenpeng', 'xubingqi', 'qiujinyue', 'zhangyan',
+                           'changxiangxu', 'zhujingxian', 'hanbo', 'zhurongxiang', 'changming', 'xiongguangyang',
+                           'wangxingyong', 'xiangli', 'linshiyi', 'gaoyiqian', 'mayizhen', 'liucheng', 'wuhaitao',
+                           'changhongguang', 'limin', 'tanghuan', 'xiegang', 'yanyubai', 'zhangjunjie', 'wangbaoliang',
+                           'zhangbensong', 'jiangwenyao', 'wangkewei', 'liuanqi', 'zhangxiaohan', 'chenyizhu',
+                           'majiake', 'yujunyi', 'jiangjie', 'zhuzhenkun', 'chenyongfa', 'chenyongcai', 'yangkai',
+                           'liujia', 'chengjiawen', 'lvjingya', 'liqianying', 'yejiexia', 'qianyinqiu', 'wangjuan',
+                           'taoxiudian', 'chenhongxu', 'sunyuyao', 'kangping', 'wangxiufang', 'liuxinwen',
+                           'linlanfang', 'wengsifan', 'lichuanfu', 'liuchangdong', 'dutao', 'zhangge', 'xiaminghui',
+                           'zhaoqingsong', 'shangpeihan', 'zhangjin', 'hejiemin', 'zhangxiangnan', 'lizhitao',
+                           'longshixiao', 'luchunxian', 'tangjunzhi', 'zhuzhenye', 'chenxianger', 'chenyongkang',
+                           'wutong', 'lizihao', 'zanjianhuan', 'tantiancheng', 'xujiangyao', 'fanjilei', 'duxiaomeng',
+                           'wangying', 'huxinyan', 'zhouxianhang', 'guoda', 'suoya', 'huangxuanli', 'wanqiao', 'yangwensi',
+                           'liuboyi', 'chentianxiao', 'limuyou', 'jiangzhiming', 'lixingxing', 'fangyue', 'xianglei',
+                           'yurongjian', 'liyuqin', 'zengning', 'chenjiangtao', 'lizeshun', 'zhangxinyu', 'yangyuanyuan',
+                           'moningkai', 'tujiali', 'rongchuyu', 'zhouweixiao', 'yangzhaonan', 'cairuilin',
+                           'dongyijing', 'zhangbaowen', 'lixueyi', 'liuxusheng', 'luchengzhi', 'jishujian', 'zhaoshilin',
+                           'wangsi', 'zhujiayi', 'zhangna', 'yangkaibo', 'huangjianan', 'liyiling', 'chenming',
+                           'liuyaqi', 'penglingxiu', 'wuhaisi', 'liuzhao', 'dengjun', 'chenyanxia', 'xuliang', 'zhaofeng',
+                           'luojiangliu', 'xuyue', 'lixiaokai', 'huangweicong', 'lizhangjian', 'xiele', 'lijianyao',
+                           'libingbing', 'limingzhao', 'wuweixuan', 'niuyuan', 'liyongshun', 'xupei', 'hejiawen',
+                           'zhaoyuliang', 'zhangzongxin', 'tangshi', 'niebeina', 'chenliaoran', 'chenwenjie', 'xiongwei',
+                           'zhouqiuming', 'zhaowengui', 'zhaozhicheng', 'yuandawei', 'wangzhicheng', 'yaoyufeng',
+                           'zhaohaoda', 'pangwenjun', 'xujinshuang', 'huyueyan', 'linjiaxin', 'chenzejia', 'linjiaming',
+                           'chenmingting', 'xujiayang', 'xujiaohao', 'hannana', 'xuxiao', 'renjiao']
+        self.operation1_people_number = [self.names_alphabet.index(i) + 1 for i in self.names_time[0:76]]
+        self.phase1_people_number = [self.names_alphabet.index(i) + 1 for i in self.names_time[0:91]]
+        pass
+
+    def my_eliminate_task(self):
+        label_ls = os.listdir(self.final_label_path)
+        label_ls_1 = []
+        label_ls_2 = []
+        for i_t in label_ls:
+            if int(i_t[1:4]) in self.phase1_people_number:
+                label_ls_1.append(i_t)
+                pass
+            else:
+                label_ls_2.append(i_t)
+                pass
+            pass
+        label_ls_present = label_ls_1
+        if self.dst_name is "DataSet2":
+            label_ls_present = label_ls_2
+            pass
+        label_ls_present.sort()
+        for i_label in label_ls_present:
+            i_label_path = self.final_label_path + i_label
+            label = self.read_txt(i_label_path)
+            self.eliminate_error_action_video(label, i_label)
+            # break
+            pass
+        pass
+
+    def eliminate_error_action_video(self, label, file_name=None):
+        """
+        Eliminate the error video from the trimmed action video
+        :param label: Reading list from label file.
+        :param file_name: Label file name.
+        :return: No return.
+        """
+        if len(np.array(label).shape) is 2:
+            t_judge = np.array(label)[:, 3]
+            a_judge = np.array(label)[:, 4]
+            t_judge_error = np.where(t_judge == '2')[0]
+            a_judge_error = np.where(a_judge == '2')[0]
+            u_judge = list(set(t_judge_error).union(set(a_judge_error)))
+            # print(file_name, "\n", a_judge, "\n", t_judge, "\n", u_judge, "\n", len(u_judge), "\n", int(file_name[1:4]))
+            # raise RuntimeError
+            if len(u_judge) > 0:
+                for ii in u_judge:
+                    n_people = int(file_name[1:4])
+                    n_option = 2
+                    if n_people in self.operation1_people_number:
+                        n_option = 1
+                        pass
+                    n_times = int(file_name[5:8])
+                    n_sequence = int(file_name[9:12])
+                    n_action = int(label[ii][0])
+                    for iii in range(1, 16):
+                        n_camera = iii
+                        video_name = self.file_model.format(n_option, n_people, n_camera, n_times, n_sequence, n_action, self.file_suffixes)
+                        # print(video_name)
+                        # raise RuntimeError
+                        src_path = self.src_video_path + video_name
+                        dst_path = self.dst_video_path + video_name
+                        if os.path.exists(src_path) and not os.path.exists(dst_path):
+                            os.rename(src_path, dst_path)
+                            print("\"{:s}\" has done!".format(video_name))
+                            # raise RuntimeError
+                            pass
+                        else:
+                            print("\"{:s}\" was not existed, or has been moved!".format(video_name))
+                            pass
+                        pass
+                    pass
+                pass
+            pass
         pass
 
     @staticmethod
@@ -272,6 +433,8 @@ if __name__ == "__main__":
     start_time = time.time()
     print("#" * 120)
     my_task = AddressLabel()
+    my_task.my_eliminate_task()
+
     # my_task.compare_original_judge(my_task.root_path, my_task.judge_path)
     # raise RuntimeError
     # if not os.path.exists(my_task.final_path):
@@ -280,18 +443,18 @@ if __name__ == "__main__":
     # if not os.path.exists(my_task.log_path):
     #     os.mkdir(my_task.log_path)
     #     pass
-    logging.basicConfig(level=logging.DEBUG,
-                        filename='{:s}{:s}_address_label.log'.format(my_task.log_path, time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())),
-                        datefmt='%Y/%m/%d %H:%M:%S',
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(lineno)d - %(module)s - %(message)s')
-    logger = logging.getLogger(__name__)
-    # my_task.merge2labels(my_task.present_parameter[3])
-    t_file_list = my_task.generate_list(my_task.final_path)
-    for i, i_content in enumerate(t_file_list[1]):
-        t_label = my_task.read_txt(my_task.final_path + i_content)
-        my_task.count_action_judge_error(t_label, my_task.present_parameter[1], i_content)
-        pass
-    my_task.store_json(my_task.temp_store_path, my_task.action_error)
+    # logging.basicConfig(level=logging.DEBUG,
+    #                     filename='{:s}{:s}_address_label.log'.format(my_task.log_path, time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())),
+    #                     datefmt='%Y/%m/%d %H:%M:%S',
+    #                     format='%(asctime)s - %(name)s - %(levelname)s - %(lineno)d - %(module)s - %(message)s')
+    # logger = logging.getLogger(__name__)
+    # # my_task.merge2labels(my_task.present_parameter[3])
+    # t_file_list = my_task.generate_list(my_task.final_path)
+    # for i, i_content in enumerate(t_file_list[1]):
+    #     t_label = my_task.read_txt(my_task.final_path + i_content)
+    #     my_task.count_action_judge_error(t_label, my_task.present_parameter[1], i_content)
+    #     pass
+    # my_task.store_json(my_task.temp_store_path, my_task.action_error)
 
     end_time = time.time()
     print("#" * 120)
