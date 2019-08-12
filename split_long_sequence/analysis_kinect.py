@@ -140,8 +140,6 @@ class AnalysisKinect(object):
         logger.addHandler(logger_handler)
         logger.setLevel(logging.DEBUG)
 
-        temp_video_path = self.hik
-        pass
 
 
     def split_depth(self, files_list):

@@ -1,6 +1,8 @@
+# -*- coding: UTF-8 -*-
 import os
 import shutil
 import subprocess
+from multiprocessing import Pool
 import sys
 import time
 import logging
@@ -47,6 +49,7 @@ class VideoCapture:
                                      112, 29, 20, 210, 248, 129, 213, 114, 57, 122, 201, 83, 79, 86, 193, 142, 119, 211, 51, 254,
                                      246, 167, 140, 13, 18, 204, 266, 253, 255, 227, 185, 224, 249, 144, 209, 65, 92, 27, 89, 15,
                                      208, 207, 48, 212, 152]
+        self.log_name = self.log_path + "/{:s}_split_mp4.log".format(time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()))
         pass
 
     @staticmethod
@@ -89,130 +92,176 @@ class VideoCapture:
         f.close()
         return return_dict
 
-    def capture(self, file_path_list):
-        for file_path in file_path_list:
-            file_name_with_postfix = os.path.basename(file_path)
-            original_video = cv2.VideoCapture(file_path)
-            if original_video.isOpened():
-                file_name = file_name_with_postfix[:-4]
-                file_name1 = '{}{}{}'.format(file_name[4:8], file_name[-8:], ".txt")  # label file name
-                file_name2 = '{}{}'.format(file_name[4:8], file_name[-8:])  # label name
-                frame_path = '{}/{}'.format(self.frame_path_in, file_name1)  # label path
-                kinect_number = file_name[8:12]  # camera number
+    def capture(self, file_path):
+        # --Logging start--
+        logger_handler = RewriteFileLogHandler(self.log_name)
+        logger = logging.getLogger(__name__)
+        logger.addHandler(logger_handler)
+        logger.setLevel(logging.DEBUG)
 
-                if os.path.exists(frame_path):
-                    f1 = open(frame_path, "r")
-                    lines = f1.readlines()
-                    for i in lines:
-                        arr_temp = i.split(',')
-                        action_number = arr_temp[0]
-                        a = self.get_action_number(action_number)
-                        file_out_name = '{}{}'.format(file_name, a)
-                        file_path_out = '{}/{}{}'.format(self.path_out, file_out_name, self.postfix)
-                        if os.path.exists(file_path_out):
-                            print("{:s} split video already exists~~~".format(file_path_out))
-                            logger.info("{:s} split video already exists~~~".format(file_path_out))
-                            continue
-                            pass
-                        if len(arr_temp) != 5:
-                            self.name = "Label format has wrong!"
-                            print(self.name)
-                            logger.info("{},{}".format(file_out_name, self.name))
-                            continue
-                            pass
-                        if arr_temp[3] != "2" or arr_temp[4] != "2":
-                            coefficient = 1.0
-                            if self.postfix_file == 1:
-                                if int(file_name[5:8]) in self.phase1_people_number:
-                                    self.phase_number = 1
-                                    pass
-                                else:
-                                    self.phase_number = 2
-                                    pass
-                                try:
-                                    coefficient = float(self.coefficient_dict[file_name2][kinect_number])
-                                    pass
-                                except:
-                                    self.name = "There are something wrong about coefficient!"
-                                    logger.info("{},{}".format(file_name_with_postfix, self.name))
-                                    continue
-                                    pass
-                                pass
-                            frame_rate1 = self.frame_rate * coefficient
-                            frame_rate1 = float('%.1f' % frame_rate1)
-                            start = self.change_frame_2_time(25.0, float(arr_temp[1]))
-                            end = self.change_frame_2_time(25.0, float(arr_temp[2]))
-                            end_frame = float(arr_temp[2]) * coefficient
-                            if self.postfix_file == 1 and self.phase_number == 2:
-                                start = self.change_frame_2_time(30.0, float(arr_temp[1]) * coefficient)
-                                end = self.change_frame_2_time(30.0, float(arr_temp[2]) * coefficient)
-                                frame_rate1 = 30.0
-                                pass
-                            ffmpeg_cmd = "ffmpeg -i {:s} -vcodec copy -acodec copy -ss {:s} -to {:s} {:s}".format(file_path, start, end, file_path_out)
-                            # print(coefficient, ffmpeg_cmd)
-                            # raise RuntimeError
-                            if (end_frame - original_video.get(7)) > 16:
-                                self.name = "End frame greater than source total frame 15!"
-                                logger.info("{},{}".format(file_out_name, self.name))
-                                continue
+        file_name_with_postfix = os.path.basename(file_path)
+        original_video = cv2.VideoCapture(file_path)
+        if original_video.isOpened():
+            file_name = file_name_with_postfix[:-4]
+            file_name1 = '{}{}{}'.format(file_name[4:8], file_name[-8:], ".txt")  # label file name
+            file_name2 = '{}{}'.format(file_name[4:8], file_name[-8:])  # label name
+            frame_path = '{}/{}'.format(self.frame_path_in, file_name1)  # label path
+            kinect_number = file_name[8:12]  # camera number
+
+            if os.path.exists(frame_path):
+                f1 = open(frame_path, "r")
+                lines = f1.readlines()
+                for i in lines:
+                    arr_temp = i.split(',')
+                    action_number = arr_temp[0]
+                    a = self.get_action_number(action_number)
+                    file_out_name = '{}{}'.format(file_name, a)
+                    file_path_out = '{}/{}{}'.format(self.path_out, file_out_name, self.postfix)
+                    if os.path.exists(file_path_out):
+                        print("{:s} split video already exists~~~".format(file_path_out))
+                        logger.info("{:s} split video already exists~~~".format(file_path_out))
+                        continue
+                        pass
+                    if len(arr_temp) != 5:
+                        self.name = "Label format has wrong!"
+                        print(self.name)
+                        logger.info("{},{}".format(file_out_name, self.name))
+                        continue
+                        pass
+                    if arr_temp[3] != "2" or arr_temp[4] != "2":
+                        coefficient = 1.0
+                        if self.postfix_file == 1:
+                            if int(file_name[5:8]) in self.phase1_people_number:
+                                self.phase_number = 1
                                 pass
                             else:
-                                if os.system(ffmpeg_cmd) is 0:
-                                    if os.path.exists(file_path_out):
-                                        video = cv2.VideoCapture(file_path_out)
-                                        if not video.isOpened():
-                                            # Delete the video in question, and replace it with the way of image re-composition.
-                                            self.name = "The first method of cutting has problems"
-                                            logger.info("{},{}".format(file_out_name, self.name))
-                                            # Remove the wrong video.
-                                            os.remove(file_path_out)
-                                            picture_path = '{}/{}/{}'.format(self.log_path, "picture", file_out_name)
-                                            if not os.path.exists(picture_path):
-                                                os.makedirs(picture_path)
-                                            picture_path_out = '{}{}'.format(picture_path, "/%3d.jpeg")
-                                            ffmpeg_cmd = "ffmpeg -i {:s} -r {:s} -ss {:s} -to {:s} {:s}".format(file_path, str(frame_rate1).split('.')[0], start, end, picture_path_out)
+                                self.phase_number = 2
+                                pass
+                            try:
+                                coefficient = float(self.coefficient_dict[file_name2][kinect_number])
+                                pass
+                            except:
+                                self.name = "There are something wrong about coefficient!"
+                                logger.info("{},{}".format(file_name_with_postfix, self.name))
+                                continue
+                                pass
+                            pass
+                        frame_rate1 = self.frame_rate * coefficient
+                        frame_rate1 = float('%.1f' % frame_rate1)
+                        start = self.change_frame_2_time(25.0, float(arr_temp[1]))
+                        end = self.change_frame_2_time(25.0, float(arr_temp[2]))
+                        start_frame = int(arr_temp[1])
+                        end_frame = int(arr_temp[2])
+                        total_frame = end_frame - start_frame
+                        end_frame = float(arr_temp[2]) * coefficient
+                        if self.postfix_file == 1 and self.phase_number == 2:
+                            start = self.change_frame_2_time(30.0, float(arr_temp[1]) * coefficient)
+                            end = self.change_frame_2_time(30.0, float(arr_temp[2]) * coefficient)
+                            frame_rate1 = 30.0
+                            pass
+                        ffmpeg_cmd = "ffmpeg -i {:s} -vcodec copy -acodec copy -ss {:s} -to {:s} {:s}".format(file_path, start, end, file_path_out)
+                        # print(coefficient, ffmpeg_cmd)
+                        # raise RuntimeError
+                        if (end_frame - original_video.get(7)) > 15:
+                            self.name = "End frame greater than source total frame 15!"
+                            logger.info("{},{}".format(file_out_name, self.name))
+                            continue
+                            pass
+                        else:
+                            if os.system(ffmpeg_cmd) is 0:
+                                if os.path.exists(file_path_out):
+                                    video = cv2.VideoCapture(file_path_out)
+                                    # Judge the total frame of action video
+                                    if not video.isOpened() or abs(video.get(5) - total_frame) > 5:
+                                        # Delete the video in question, and replace it with the way of image re-composition.
+                                        self.name = "The first method of cutting has problems"
+                                        logger.info("{},{}".format(file_out_name, self.name))
+                                        # Remove the wrong video.
+                                        os.remove(file_path_out)
+                                        picture_path = '{}/{}/{}'.format(self.log_path, "picture", file_out_name)
+                                        if not os.path.exists(picture_path):
+                                            os.makedirs(picture_path)
+                                        # --TODO--
+                                        # picture_path_out = '{}{}'.format(picture_path, "/%3d.jpeg")
+                                        # ffmpeg_cmd = "ffmpeg -i {:s} -r {:s} -ss {:s} -to {:s} {:s}".format(file_path, str(frame_rate1).split('.')[0], start, end, picture_path_out)
+                                        if self.opencv_extract_frame(original_video, picture_path, start_frame, end_frame) is 0:
+                                            ffmpeg_cmd = "ffmpeg -y -r {} -i {}/%4d.jpeg {}".format(str(frame_rate1), picture_path, file_path_out)
                                             if os.system(ffmpeg_cmd) is 0:
-                                                ffmpeg_cmd = "ffmpeg -y -r {} -i {}/%3d.jpeg {}".format(str(frame_rate1), picture_path, file_path_out)
-                                                if os.system(ffmpeg_cmd) is 0:
-                                                    self.name = "Composite video by image!"
-                                                    logger.info("{},{}".format(file_out_name, self.name))
-                                                    pass
-                                                shutil.rmtree(picture_path)
-                                            else:
-                                                self.name = "The second method also does not work"
-                                                logger.info("{},{}".format(file_name_with_postfix, self.name))
+                                                self.name = "Composite video by image!"
+                                                logger.info("{},{}".format(file_out_name, self.name))
                                                 pass
-                                            pass
+                                            shutil.rmtree(picture_path)
                                         else:
-                                            print(file_path_out, "done~")
+                                            self.name = "The second method also does not work"
+                                            logger.info("{},{}".format(file_name_with_postfix, self.name))
                                             pass
+                                        # --TODO--
                                         pass
                                     else:
-                                        self.name = "Maybe the action label is wrong!"
-                                        logger.info("{},{}".format(file_out_name, self.name))
+                                        print(file_path_out, "done~")
                                         pass
+                                    pass
+                                else:
+                                    self.name = "Maybe the action label is wrong!"
+                                    logger.info("{},{}".format(file_out_name, self.name))
                                     pass
                                 pass
                             pass
-                        else:
-                            self.name = "Action judge or time windows has wrong!"
-                            print(self.name)
-                            logger.info("{},{}".format(file_out_name, self.name))
-                            pass
                         pass
-                    f1.close()
+                    else:
+                        self.name = "Action judge or time windows has wrong!"
+                        print(self.name)
+                        logger.info("{},{}".format(file_out_name, self.name))
+                        pass
                     pass
-                else:
-                    self.name = "Can not find the label file!"
-                    logger.info("{},{}".format(file_name1, self.name))
-                    continue
-                    pass
+                f1.close()
+                pass
             else:
-                self.name = "Source video can not open!"
-                logger.info("{},{}".format(file_name_with_postfix, self.name))
+                self.name = "Can not find the label file!"
+                logger.info("{},{}".format(file_name1, self.name))
+                return
+                pass
+        else:
+            self.name = "Source video can not open!"
+            logger.info("{},{}".format(file_name_with_postfix, self.name))
+            return
+        pass
+
+    @staticmethod
+    def opencv_extract_frame(src_video, dst, start, end):
+        video = src_video
+        # time_interval = 1  # set a extract time window
+        count = 0
+        save_count = 0
+        while True:
+            success, frames = video.read()
+            count += 1
+            if not success:
+                print("Video has been all read")
+                break
+                pass
+            if start <= count <= end:
+                save_count += 1
+                save_name = "{:04d}.jpeg".format(save_count)
+                # frames = cv2.resize(frames, (540, 360))
+                cv2.imwrite(dst + save_name, frames)
+                # print("{:s} has been saved".format(save_name))
+                pass
             pass
+        return 0
         pass
     pass
+
+
+# --Override the emit method in FileLogHandler class--
+class RewriteFileLogHandler(logging.Handler):
+    def __init__(self, file_path):
+        self._fd = os.open(file_path, os.O_WRONLY | os.O_CREAT | os.O_APPEND)
+        logging.Handler.__init__(self)
+
+    def emit(self, record):
+        msg = "{}\n".format(self.format(record))
+        os.write(self._fd, msg.encode('utf-8'))
 
 
 if __name__ == "__main__":
@@ -222,12 +271,14 @@ if __name__ == "__main__":
     print("Total: ", file_path_lst.__len__())
     print('start ...')
     t1 = time.time() * 1000
-    logging.basicConfig(level=logging.DEBUG,
-                        filename='{}/{}_split_mp4.log'.format(pro.log_path, time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())),
-                        datefmt='%Y/%m/%d %H:%M:%S',
-                        format='%(message)s')
-    logger = logging.getLogger(__name__)
-    pro.capture(file_path_lst)
+
+    # --Multiple processes--
+    p = Pool(24)
+    # p.map(my_task.split_depth, depth_lst)
+    p.map(pro.capture, file_path_lst)
+    p.close()
+    p.join()
+
     t2 = time.time() * 1000
     print('take time:' + str((t2 - t1) / 1000) + 's')
     print('end.')
