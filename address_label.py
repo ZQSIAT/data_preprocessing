@@ -1,6 +1,7 @@
-# This code is for deal the error of label.
-# 1, To merge two label which are created by different people.
-
+"""
+This code is for deal the error of label.
+1, To merge two label which are created by different people.
+"""
 import xlrd
 import os
 import numpy as np
@@ -42,9 +43,10 @@ class AddressLabel(object):
         self.action_error = {"Total": 0}
         self.temp_store_path = self.log_path + "{:s}-{:s}_error.json".format(self.dst_name, self.json_name)
 
-        self.final_label_path = "Z:/DATASET_BACKUP/LABEL/new_label/final_label_all/"
-        self.src_video_path = "Z:/publish_data/{:s}/RGB_HIKVISION_CAPTURE/".format(self.dst_name)
-        self.dst_video_path = "Z:/publish_data/{:s}/temp_error_trimmed_video/".format(self.dst_name)
+        self.final_label_path = "/data/zqs/datasets/cas_mhad/DATASET_BACKUP/LABEL/new_label/final_label_all/"
+        self.src_video_path = "/data/zqs/datasets/cas_mhad/publish_data/DataSet2/RGB_HIKVISION_CAPTURE/"
+        self.dst_video_path = "/data/zqs/datasets/cas_mhad/publish_data/DataSet2/temp_error_trimmed_video/"
+        self.is_path_existed_if_no_mk_it(self.dst_video_path)
         self.file_model = "O{:03d}P{:03d}C{:03d}T{:03d}S{:03d}A{:03d}.{:s}"
         self.file_suffixes = "mp4"
         self.names_alphabet = ["cairuilin", "caojunhai", "changhongguang", "changming", "changxiangxu", "chengjiawen",
@@ -146,7 +148,7 @@ class AddressLabel(object):
                 pass
             pass
         label_ls_present = label_ls_1
-        if self.dst_name is "DataSet2":
+        if self.dst_name == "DataSet2":
             label_ls_present = label_ls_2
             pass
         label_ls_present.sort()
@@ -425,6 +427,17 @@ class AddressLabel(object):
         with open(store_path, 'w') as json_file:
             json_file.write(json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '), ensure_ascii=False))
 
+    @staticmethod
+    def is_path_existed_if_no_mk_it(path):
+        """
+        Check the path existing or not, if not create it.
+        :param path: Must be a path not a file.
+        :return: No return.
+        """
+        if not os.path.exists(path):
+            os.mkdir(path)
+            pass
+        pass
     pass
 
 
@@ -432,29 +445,9 @@ if __name__ == "__main__":
     print("Start processing...")
     start_time = time.time()
     print("#" * 120)
+
     my_task = AddressLabel()
     my_task.my_eliminate_task()
-
-    # my_task.compare_original_judge(my_task.root_path, my_task.judge_path)
-    # raise RuntimeError
-    # if not os.path.exists(my_task.final_path):
-    #     os.mkdir(my_task.final_path)
-    #     pass
-    # if not os.path.exists(my_task.log_path):
-    #     os.mkdir(my_task.log_path)
-    #     pass
-    # logging.basicConfig(level=logging.DEBUG,
-    #                     filename='{:s}{:s}_address_label.log'.format(my_task.log_path, time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())),
-    #                     datefmt='%Y/%m/%d %H:%M:%S',
-    #                     format='%(asctime)s - %(name)s - %(levelname)s - %(lineno)d - %(module)s - %(message)s')
-    # logger = logging.getLogger(__name__)
-    # # my_task.merge2labels(my_task.present_parameter[3])
-    # t_file_list = my_task.generate_list(my_task.final_path)
-    # for i, i_content in enumerate(t_file_list[1]):
-    #     t_label = my_task.read_txt(my_task.final_path + i_content)
-    #     my_task.count_action_judge_error(t_label, my_task.present_parameter[1], i_content)
-    #     pass
-    # my_task.store_json(my_task.temp_store_path, my_task.action_error)
 
     end_time = time.time()
     print("#" * 120)

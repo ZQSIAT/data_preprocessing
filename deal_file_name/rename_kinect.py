@@ -59,7 +59,7 @@ class renameKinect(object):
         self.t = ""
         self.newNames = []   #重命名后的名字
 
-    def switchS(self,var):
+    def switchS(self, var):
         switcher= {
             'a01': "S001",
             'a02': "S002",

@@ -12,6 +12,7 @@ from multiprocessing import Pool
 import pickle
 from PIL import Image
 import matplotlib.pyplot as plt
+import glob
 
 
 class AnalysisKinect(object):
@@ -21,16 +22,18 @@ class AnalysisKinect(object):
                                     ["/data/zqs/datasets/cas_mhad/", "/data/zqs/workplace/dataset_preprocessing/"]]  # 34
         self.split_depth_path = "/data/zqs/datasets/split_depth/"
         self.temp_unzip_bin = "/data/zqs/workplace/temp/"
-        self.dst_path = "DataSet1"
         self.present_envir = self.perform_environment[2]
-        self.hikvision_path = self.present_envir[0] + "Preprocessing_Test/{:s}/RGB_HIKVISION/".format(self.dst_path)
-        self.kinect_path = self.present_envir[0] + "Preprocessing_Test/{:s}/KINECT/RGB_KINECT/".format(self.dst_path)
-        self.depth_path = self.present_envir[0] + "Preprocessing_Test/{:s}/KINECT/DEPTH_KINECT/".format(self.dst_path)
-        self.log_path = self.present_envir[1] + "log/"
-        self.final_label_path = self.present_envir[0] + "DATASET_BACKUP/LABEL/new_label/final_label_all/"
+        self.hikvision_path = self.present_envir[0] + "publish_data/RGB_HIKVISION/"
+        self.kinect_path = self.present_envir[0] + "publish_data/RGB_KINECT/"
+        self.kinect_capture_path = self.present_envir[0] + "publish_data/RGB_KINECT_CAPTURE/"
+        self.hikvision_capture_path = self.present_envir[0] + "publish_data/RGB_KINECT_CAPTURE/"
 
-        self.s001_s007_30fps_avi_path = self.present_envir[0] + "Preprocessing_Test/{:s}/KINECT/S001_S007_30FPS_RGB_KINECT/".format(self.dst_path)
-        self.logger = None
+        self.depth_path = self.present_envir[0] + "publish_data/DEPTH_KINECT/"
+        self.log_path = self.present_envir[0] + "publish_data/log/"
+        self.log_name = '{:s}{:s}_statistic_frames.log'.format(self.log_path, time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()))
+        self.final_label_path = self.present_envir[0] + "publish_data/label/"
+
+        # self.logger = None
         self.analysis_frames = {"Total": [0] * 19}
         self.analysis_duration = {"Total": [0.0] * 19}
         self.file_model = "O{:03d}P{:03d}C{:03d}T{:03d}S{:03d}.{:s}"
@@ -122,12 +125,31 @@ class AnalysisKinect(object):
         self.phase2_people_number = [self.names_alphabet.index(i) + 1 for i in self.names_time[91:]]
         self.store_json_path = None
         self.store_csv_path = None
-        self.temp_list_path = self.log_path + "phase1_hikvision_frame.txt"
-        self.log_name = '{:s}{:s}_split_depth.log'.format(self.log_path, time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()))
-        self.phase1_hikvision_frame_json = self.read_txt_to_json(self.temp_list_path, ',')
+        self.temp_list_path = None
+        self.temp_delete_path = None
+        self.phase1_hikvision_frame_json = None
+        self.name = None
+        self.src_bin = self.split_depth_path
+        self.dst_bin_tgz = "/data/zqs/datasets/tgz_split_depth/"
         pass
 
+    def anlysis_video(self, files_list):
+        # --Logging start--
+        logger_handler = RewriteFileLogHandler(self.log_name)
+        logger = logging.getLogger(__name__)
+        logger.addHandler(logger_handler)
+        logger.setLevel(logging.DEBUG)
+
+        temp_video_path = self.hik
+        pass
+
+
     def split_depth(self, files_list):
+        # --read hikvision frame--
+        self.temp_list_path = "/data/zqs/datasets/cas_mhad/publish_data/log/phase1_hikvision_frame.txt"
+        self.temp_delete_path = "/data/zqs/datasets/cas_mhad/publish_data/log/phase2_2019-08-06-12-37-31_split_avi.txt"
+        self.phase1_hikvision_frame_json = self.read_txt_to_json(self.temp_list_path, ',')
+
         # --Logging start--
         logger_handler = RewriteFileLogHandler(self.log_name)
         logger = logging.getLogger(__name__)
@@ -138,83 +160,150 @@ class AnalysisKinect(object):
         temp_7z_path = self.depth_path + files_list
         temp_unzip_path = self.temp_unzip_bin + files_list[:-3]
 
-        # --Unzip the 7z file--
-        self.is_path_existed_if_no_mk_it(temp_unzip_path)
-        cmd_unzip = "7z x {:s} -o{:s} -y".format(temp_7z_path, temp_unzip_path)
-        src_path = temp_unzip_path + "/depth.bin"
-        if not os.path.exists(src_path):
-            if os.system(cmd_unzip) is 0:
-                print("The file \"{:s}\" has been unzipped.".format(files_list))
-                logger.info("The file \"{:s}\" has been unzipped.".format(files_list))
-                pass
-            else:
-                print("The file \"{:s}\" was not decompressed successfully.".format(files_list))
-                logger.info("The file \"{:s}\" was not decompressed successfully.".format(files_list))
-                pass
-            pass
-
         # --Split the big bin file--
         label_name = files_list[4:8] + files_list[12:].replace('7z', 'txt')
         frame_25fps = float(self.phase1_hikvision_frame_json[label_name[0:-4]][0])
         if os.path.exists(self.final_label_path + label_name):
             label_list = self.read_txt(self.final_label_path + label_name, ',')
+
+            # --Unzip the 7z file--
+            temp_dst_path = self.split_depth_path + files_list.replace('.7z', 'A{:03d}.bin'.format(int(label_list[0][0])))
+            if os.path.exists(temp_dst_path):
+                print("The file \"{:s}\" has been done.".format(files_list))
+                return
+                pass
+            self.is_path_existed_if_no_mk_it(temp_unzip_path)
+            cmd_unzip = "7z x {:s} -o{:s} -y".format(temp_7z_path, temp_unzip_path)
+            src_path = temp_unzip_path + "/depth.bin"
+            if not os.path.exists(src_path):
+                if os.system(cmd_unzip) is 0:
+                    print("The file \"{:s}\" has been unzipped.".format(files_list))
+                    # logger.info("The file \"{:s}\" has been unzipped.".format(files_list))
+                    pass
+                else:
+                    print("The file \"{:s}\" was not decompressed successfully.".format(files_list))
+                    logger.info("The file \"{:s}\" was not decompressed successfully.".format(files_list))
+                    return
+                    pass
+                pass
             if os.path.exists(src_path):
                 with open(src_path, mode='rb') as f:
                     try:
                         arr = np.int32(pickle.load(f))
-                        coefficient = len(arr) / frame_25fps
-                        for i, i_content in enumerate(label_list):
-                            begin_f = round(int(i_content[1]) * coefficient)
-                            end_f = round(int(i_content[2]) * coefficient)
-                            dst_name = files_list.replace('.7z', 'A{:03d}.bin'.format(int(i_content[0])))
-                            dst_path = self.split_depth_path + dst_name
-                            if not os.path.exists(dst_path) and begin_f < end_f:
-                                with open(dst_path, mode='wb') as f_s:
-                                    pickle.dump(arr[begin_f:end_f, :], f_s)
-                                    print("File \"{:s}\" has been split from file \"{:s}\".".format(dst_name, files_list))
-                                    logger.info("File \"{:s}\" has been split from file \"{:s}\".".format(dst_name, files_list))
-                                    pass
-                                pass
-                            elif os.path.exists(dst_path):
-                                print("File \"{:s}\" has been split! ".format(dst_name))
-                                logger.info("File \"{:s}\" has been split! ".format(dst_name))
-                                pass
-                            elif begin_f >= end_f:
-                                print("\"{:s}\" Maybe something wrong in begin and end frames.".format(dst_name))
-                                logger.info("\"{:s}\" Maybe something wrong in begin and end frames.".format(dst_name))
-                                pass
-                            pass
                         pass
                     except:
                         logger.info("src_path \"{:s}\" have some problems.".format(src_path))
+                        return
+                        pass
+                    coefficient = len(arr) / frame_25fps
+                    for i, i_content in enumerate(label_list):
+                        begin_f = round(int(i_content[1]) * coefficient)
+                        end_f = round(int(i_content[2]) * coefficient)
+                        dst_name = files_list.replace('.7z', 'A{:03d}.bin'.format(int(i_content[0])))
+                        dst_path = self.split_depth_path + dst_name
+                        if os.path.exists(dst_path):
+                            print("\"{:s}\" has been existed!".format(dst_name))
+                            # logger.info("\"{:s}\" has been existed!".format(dst_name))
+                            continue
+                            pass
+                        if len(i_content) != 5:
+                            self.name = "Label format has wrong!"
+                            print(self.name)
+                            logger.info("{},{}".format(dst_name, self.name))
+                            continue
+                            pass
+                        if i_content[3] == "2" and i_content[4] == "2":
+                            self.name = "Action judge or time windows wrong!"
+                            print(self.name)
+                            logger.info("{},{}".format(dst_name, self.name))
+                            continue
+                            pass
+                        if (end_f - begin_f) <= 15:
+                            print("\"{:s}\" Maybe something wrong in begin and end frames.".format(dst_name))
+                            logger.info("\"{:s}\" Maybe something wrong in begin and end frames.".format(dst_name))
+                            continue
+                            pass
+                        if (end_f - len(arr)) >= 15:
+                            self.name = "End frame greater than source total frame 15!"
+                            logger.info("{},{}".format(dst_name, self.name))
+                            continue
+                            pass
+                        with open(dst_path, mode='wb') as f_s:
+                            pickle.dump(arr[begin_f:end_f, :], f_s)
+                            print("File \"{:s}\" has been split from file \"{:s}\".".format(dst_name, files_list))
+                            logger.info("File \"{:s}\" has been split from file \"{:s}\".".format(dst_name, files_list))
+                            pass
+                        pass
                 pass
             else:
                 print("File \"{:s}\" does not existed!".format(files_list))
-                logger.info("File \"{:s}\" does not existed!".format(files_list))
+                # logger.info("File \"{:s}\" does not existed!".format(files_list))
+                return
                 pass
             pass
         else:
-            print("Label file \"{:s}\" does not existed!".format(label_name))
-            logger.info("Label file \"{:s}\" does not existed!".format(label_name))
+            print("Label file \"{:s}\" can not find!".format(label_name))
+            logger.info("Label file \"{:s}\" can not find!".format(label_name))
+            return
             pass
-
         # --Delete the temp big bin file--
         cmd_delete = "rm -r {:s}".format(temp_unzip_path)
         if os.system(cmd_delete) is 0:
             print("Temp file \"{:s}\" has been deleted!".format(temp_unzip_path))
-            logger.info("Temp file \"{:s}\" has been deleted!".format(temp_unzip_path))
+            # logger.info("Temp file \"{:s}\" has been deleted!".format(temp_unzip_path))
             pass
         else:
             print("An error occurred while deleting the file \"{:s}\".".format(temp_unzip_path))
             logger.info("An error occurred while deleting the file \"{:s}\".".format(temp_unzip_path))
+            return
             pass
-
         # --done--
         print("{:s} has done.".format(files_list))
-        logger.info("{:s} has done.".format(files_list))
+        # logger.info("{:s} has done.".format(files_list))
         pass
 
-    def s001_s007_25fps_to_30fps_avi_kiniect(self, list_path):
+    # This code is for compressing of split depth .bin files.
+    # Take a people's data into a single .tgz compressed file.
+    def batch_compress(self, people_number):
+        src_bin_model = "O*P{:03d}C*T*S*A*.bin".format(people_number)
+        dst_bin_model = "P{:03d}.tgz".format(people_number)
+        src_path = self.src_bin + src_bin_model
+        dst_path = self.dst_bin_tgz + dst_bin_model
+        tar_cmd = "tar -zcvPf {:s} {:s}".format(dst_path, src_path)
+        # print(tar_cmd)
+        # raise RuntimeError
+        if not os.path.exists(dst_path):
+            s_time = time.time()
+            if os.system(tar_cmd) == 0:
+                print("{:s} successfully compressed!".format(dst_bin_model))
+                pass
+            e_time = time.time()
+            print("{:s} spend {:.2f} for compressing.".format(src_bin_model, (e_time - s_time)))
+            pass
+        else:
+            print("{:s} has been compressed!".format(dst_bin_model))
+            pass
+        pass
+
+    # This function is for delete
+    def batch_delete(self):
+        with open(self.temp_delete_path) as lf:
+            for line in lf.readlines():
+                f_line = line.strip("\n")
+                delete_name = "{:s}*.avi".format(f_line)
+                delete_cmd = "rm " + self.kinect_capture_path + delete_name
+                if os.system(delete_cmd) == 0:
+                    print("{:s} has been deleted!".format(delete_name))
+                    pass
+                else:
+                    print("{:s} error with executing delete command!".format(delete_name))
+                    pass
+                # raise RuntimeError
+                pass
+            pass
+        pass
+
+    def convert_frame_avi_kiniect(self, list_path):
         for i, i_content in enumerate(list_path):
             people = int(i_content[0][1:4])
             operation = 1
@@ -249,6 +338,12 @@ class AnalysisKinect(object):
         :param present_path:The path of videos.
         :return:No return. The results will write to a json file.
         """
+        # --Logging start--
+        logger_handler = RewriteFileLogHandler(self.log_name)
+        logger = logging.getLogger(__name__)
+        logger.addHandler(logger_handler)
+        logger.setLevel(logging.DEBUG)
+
         video_list = self.generate_list(present_path)
         for i, i_content in enumerate(video_list[1]):
             capture = cv2.VideoCapture(video_list[0][i])
@@ -256,9 +351,9 @@ class AnalysisKinect(object):
                 frame = int(capture.get(7))
                 rate = capture.get(5)
                 duration = round(frame / rate, 3)
-                if frame < 0:
+                if frame <= 0:
                     print("{:s} frame was wrong.".format(i_content))
-                    self.logger.info("{:s} frame was wrong.".format(i_content))
+                    logger.info("{:s} frame was wrong.".format(i_content))
                     continue
                     pass
                 camera = int(i_content[9:12])
@@ -292,21 +387,21 @@ class AnalysisKinect(object):
                 pass
             else:
                 print("{:s} was broken.".format(i_content))
-                self.logger.info("{:s} was broken.".format(i_content))
+                logger.info("{:s} was broken.".format(i_content))
                 continue
                 pass
         # --store static results as a json file--
-        self.store_json_path = self.log_path + self.dst_path + "_" + present_path.split('/')[-2] + time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()) + "_statistic_frames.json"
+        self.store_json_path = self.log_path + present_path.split('/')[-2] + time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()) + "_statistic_frames.json"
         self.store_json(self.store_json_path, self.analysis_frames)
 
-        self.store_json_path = self.log_path + self.dst_path + "_" + present_path.split('/')[-2] + time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()) + "_statistic_duration.json"
+        self.store_json_path = self.log_path + present_path.split('/')[-2] + time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()) + "_statistic_duration.json"
         self.store_json(self.store_json_path, self.analysis_duration)
 
         # --store static results as a csv file--
-        self.store_csv_path = self.log_path + self.dst_path + "_" + present_path.split('/')[-2] + time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()) + "_statistic_frames.csv"
+        self.store_csv_path = self.log_path + present_path.split('/')[-2] + time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()) + "_statistic_frames.csv"
         self.write_csv(self.analysis_frames, self.store_csv_path)
 
-        self.store_csv_path = self.log_path + self.dst_path + "_" + present_path.split('/')[-2] + time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()) + "_statistic_duration.csv"
+        self.store_csv_path = self.log_path + present_path.split('/')[-2] + time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()) + "_statistic_duration.csv"
         self.write_csv(self.analysis_duration, self.store_csv_path)
 
         pass
@@ -452,15 +547,15 @@ class AnalysisKinect(object):
             # raise RuntimeError
             for i in range(len(arr)):
                 temp_arr = arr[i, :].reshape(424, 512)
-                plt.imshow(temp_arr)
-                plt.imshow(temp_arr, cmap="gray", vmin=0, vmax=8000)
-                plt.show()
-                plt.close()
-                # image = Image.fromarray(temp_arr)  # .convert('L')
-                # image.save("{:s}/{:04d}.png".format(save_png_path, i+1), 'png')
-                # print("{:04d} has done~~~!!~~~~".format(i+1))
+                # plt.imshow(temp_arr)
+                # plt.imshow(temp_arr, cmap="gray", vmin=0, vmax=8000)
+                # plt.show()
+                # plt.close()
+                image = Image.fromarray(temp_arr)  # .convert('L')
+                image.save("{:s}/{:04d}.png".format(save_png_path, i+1), 'png')
+                print("{:04d} has been saved.".format(i+1))
                 pass
-        raise RuntimeError
+        # raise RuntimeError
         pass
 
     @staticmethod
@@ -523,71 +618,27 @@ if __name__ == "__main__":
     print("#" * 120)
 
     my_task = AnalysisKinect()
+    my_task.statistic_frames(my_task.hikvision_path)
+
+    # temp_bin_path = "E:/pycharm_project/temp/O002P055C019T002S003/"
+    # AnalysisKinect.bin_sequence_to_png(temp_bin_path + "depth.bin", temp_bin_path)
+
+    # my_task.batch_delete()
     # my_task.bin_sequence_to_png("/data/zqs/datasets/split_depth/O001P009C016T001S001A002.bin")
 
     # --generate files list--
-    depth_lst = my_task.generate_list(my_task.depth_path)[1]
-    depth_lst.sort()
-    # --Multiple processes--
-    p = Pool(16)
-    p.map(my_task.split_depth, depth_lst)
-    p.close()
-    p.join()
-    """
-    # --move broken mp4 videos--
-    t_mp4_broken_log_path = my_task.log_path + "phase2_mp4_cannot_use.txt"
-    t_mp4_broken_path = "Z:/Preprocessing_Test/DataSet2/temp_mp4_cannot_use/"
+    # depth_lst = my_task.generate_list(my_task.depth_path)[1]
+    # depth_lst.sort()
 
-    t_avi_broken_log_path = my_task.log_path + "phase2_avi_cannot_use.txt"
-    t_avi_broken_path = "Z:/Preprocessing_Test/DataSet2/temp_avi_cannot_use/"
+    # people_ls = my_task.phase1_people_number
+    # people_ls.sort()
 
-    my_task.is_path_existed_if_no_mk_it(t_mp4_broken_path)
-    my_task.is_path_existed_if_no_mk_it(t_avi_broken_path)
-
-    list_files = (my_task.read_txt(t_avi_broken_log_path))
-
-    for ii, ii_content in enumerate(list_files):
-        temp_name = "O002" + ii_content[0]
-        if int(ii_content[0][1:4]) in my_task.operation1_people_number:
-            temp_name = "O001" + ii_content[0]
-            pass
-        src = my_task.hikvision_path + temp_name
-        dst = t_mp4_broken_path + temp_name
-        my_task.move_files(src, dst)
-        print("{:d} {:s} has done.".format(ii+1, ii_content[0]))
-        pass
-    raise RuntimeError
-
-    # --merge statistic of kinect and hikvision --
-    t_k_path = my_task.log_path + "DataSet2_RGB_KINECT2019-07-09-12-29-44_statistic_frames.json"
-    t_h_path = my_task.log_path + "DataSet2_RGB_HIKVISION2019-07-09-18-31-57_statistic_frames.json"
-    t_m_j_path = my_task.log_path + "phase2_merged_frames.json"
-    t_m_csv_path = my_task.log_path + "phase2_merged_frames.csv"
-    merged_dict = my_task.merge_frame_statistic(my_task.read_json(t_k_path), my_task.read_json(t_h_path))
-    my_task.store_json(t_m_j_path, merged_dict)
-    my_task.write_csv(merged_dict, t_m_csv_path)
-    raise RecursionError
-
-    # --cutting--
-    begin_time = "00:00:00.000"
-    over_time = "00:01:05.000"  # avi "00:01:05.000"
-    temp_src = "Z:/Preprocessing_Test/DataSet1/temp_avi_cannot_use/"
-    temp_dst = "Z:/Preprocessing_Test/DataSet1/temp_avi_can_use/"
-    my_task.is_path_existed_if_no_mk_it(temp_dst)
-    name = "O001P082C{:03d}T001S005.avi"
-    for i in range(16, 20):
-        name_present = name.format(i)
-        src = temp_src + name_present
-        dst = temp_dst + name_present
-        my_task.split_video(src, begin_time, over_time, dst)
-        pass
-    raise RuntimeError
-
-    # my_task.log_parameter(my_task.log_path)
-    # my_task.statistic_frames(my_task.hikvision_path)
-    # file_list = my_task.read_txt(my_task.temp_list_path)
-    # my_task.s001_s007_25fps_to_30fps_avi_kiniect(file_list)
-    """
+    # # --Multiple processes--
+    # p = Pool(24)
+    # # p.map(my_task.split_depth, depth_lst)
+    # p.map(my_task.batch_compress, people_ls)
+    # p.close()
+    # p.join()
     end_time = time.time()
     print("#" * 120)
     print("Finished! Time elapse: {:.2f} minutes.".format((end_time - start_time) / 60.0))
