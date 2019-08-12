@@ -12,6 +12,7 @@ import cv2
 class VideoCapture:
     def __init__(self):
         self.frame_rate = 25.0
+        self.src_files = ["/data/zqs/datasets/cas_mhad", "/home/zqs/shenzj/data"]   # 34, 47
         self.postfix_file = 2
         if self.postfix_file == 1:
             self.postfix = ".avi"
@@ -21,18 +22,18 @@ class VideoCapture:
             pass
         self.phase_number = None
         if self.postfix_file == 2:
-            self.path_in = "/home/zqs/shenzj/data/publish_data/RGB_HIKVISION"
-            self.path_out = "/home/zqs/shenzj/data/publish_data/RGB_HIKVISION_CAPTURE"
-            self.log_path = "/home/zqs/shenzj/data/publish_data/log/RGB_split_log"
+            self.path_in = "{:s}/publish_data/RGB_HIKVISION".format(self.src_files[0])
+            self.path_out = "{:s}/publish_data/RGB_HIKVISION_CAPTURE".format(self.src_files[0])
+            self.log_path = "{:s}/publish_data/log/RGB_split_log".format(self.src_files[0])
             pass
         else:
-            self.path_in = "/home/zqs/shenzj/data/publish_data/RGB_KINECT"
-            self.path_out = "/home/zqs/shenzj/data/publish_data/RGB_KINECT_CAPTURE"
-            self.log_path = "/home/zqs/shenzj/data/publish_data/log/Kinect_split_log"
-            self.coefficient_path = "/home/zqs/shenzj/data/publish_data/log/split_coefficient.txt"
+            self.path_in = "{:s}/publish_data/RGB_KINECT".format(self.src_files[0])
+            self.path_out = "{:s}/publish_data/RGB_KINECT_CAPTURE".format(self.src_files[0])
+            self.log_path = "{:s}/publish_data/log/Kinect_split_log".format(self.src_files[0])
+            self.coefficient_path = "{:s}/publish_data/log/split_coefficient.txt".format(self.src_files[0])
             self.coefficient_dict = self.get_coefficient(self.coefficient_path)
             pass
-        self.frame_path_in = "/home/zqs/shenzj/data/publish_data/label/"
+        self.frame_path_in = "{:s}/publish_data/label/".format(self.src_files[0])
         self.name = None
         self.phase1_people_number = [274, 21, 160, 50, 81, 36, 45, 173, 97, 158, 88, 111, 49, 110, 240, 199, 56, 54, 95,
                                      252, 106, 77, 12, 58, 128, 261, 176, 53, 135, 78, 96, 272, 63, 264, 105, 258, 170, 74,
@@ -172,6 +173,7 @@ class VideoCapture:
                                 if os.path.exists(file_path_out):
                                     video = cv2.VideoCapture(file_path_out)
                                     # Judge the total frame of action video
+                                    # --TODO--
                                     if not video.isOpened() or abs(video.get(5) - total_frame) > 5:
                                         # Delete the video in question, and replace it with the way of image re-composition.
                                         self.name = "The first method of cutting has problems"
